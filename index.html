@@ -299,10 +299,8 @@
     </style>
 </head>
 <body>
-    <!-- 우측 하단 고정 푸터 -->
     <div class="footer-made-gt">Made.GT</div>
 
-    <!-- 좌측 상단 컨트롤 스위치 -->
     <div class="top-controls">
         <div class="toggle-item">
             <span>🔊 사운드</span>
@@ -320,7 +318,6 @@
         </div>
     </div>
 
-    <!-- 3D 줌인 모션 오버레이 -->
     <div class="zoom-overlay" id="zoomOverlay">
         <div class="zoom-card-container">
             <div class="zoom-card-inner" id="zoomCardInner"></div>
@@ -350,7 +347,6 @@
         </div>
     </div>
 
-    <!-- 카드 등록 모달 -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('addModal')">&times;</span>
@@ -400,7 +396,6 @@
         </div>
     </div>
 
-    <!-- 전체 카드 확인 모달 -->
     <div class="modal" id="viewModal">
         <div class="modal-content" style="max-width:700px;">
             <span class="modal-close" onclick="closeModal('viewModal')">&times;</span>
@@ -412,7 +407,6 @@
     <script>
         const defaultAvatar = 'img/player.png';
         
-        // 📌 닉네임별 프로필 이미지 매핑 (필요한 닉네임과 URL을 지정하세요)
         const NAME_AVATAR_MAP = {
             '한승기': 'img/HSG.jpg',
             '정세훈': 'img/JSH.jpg',
@@ -450,7 +444,7 @@
         function playCustomMp3(filePath) {
             const audio = new Audio(filePath);
             audio.play().catch(err => {
-                console.warn('오디오 재생 실패 (사용자 상호작용 필요 또는 파일 경로 확인):', err);
+                console.warn('오디오 재생 실패:', err);
             });
         }
 
@@ -459,7 +453,6 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // 🎈 뾱뾱 효과음 (On/Off 스위치 조작음)
         function playPopSound(isOn) {
             initAudio();
             const now = audioCtx.currentTime;
@@ -467,7 +460,6 @@
             const gain = audioCtx.createGain();
 
             osc.type = 'sine';
-            // 켜질 때는 살짝 높은 피치(600 -> 900Hz), 끌 때는 약간 낮은 피치(800 -> 500Hz)
             const startFreq = isOn ? 600 : 800;
             const endFreq = isOn ? 950 : 450;
 
@@ -484,7 +476,6 @@
             osc.stop(now + 0.06);
         }
 
-        // 🎃 사운드 토글 10회 감지 이스터에그 및 스위치 뾱뾱이 바인딩
         function setupToggleEvents() {
             const soundToggle = document.getElementById('toggleSound');
             const motionToggle = document.getElementById('toggleMotion');
@@ -583,8 +574,6 @@
             '그랜드마스터': { color: '#ef4444', glow: 'rgba(239, 68, 68, 0.9)', score: 8 },
             '챌린저': { color: '#38bdf8', glow: 'rgba(56, 189, 248, 0.95)', score: 9 }
         };
-
-        const allLanes = ['탑', '정글', '미드', '원딜', '서폿'];
 
         const playerPool = [
             { id: 1, name: '장유성', tier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('장유성') },
@@ -806,6 +795,10 @@
         function handleCardClick(cardEl) {
             if (isAnimating) return;
 
+            // 카드에 해당된 플레이어 닉네임 확인
+            const playerNameEl = cardEl.querySelector('.p-name');
+            const playerName = playerNameEl ? playerNameEl.innerText.trim() : '';
+
             if (!isMotionOn()) {
                 playFlipSound();
                 cardEl.classList.toggle('flipped');
@@ -830,6 +823,11 @@
             zoomInner.className = `zoom-card-inner ${teamClass}`;
 
             overlay.classList.add('active');
+
+            // 🎯 장유성 카드인 경우 돌기 시작할 때 sound/2.mp3 재생
+            if (playerName === '장유성' && isSoundOn()) {
+                playCustomMp3('sound/2.mp3');
+            }
 
             setTimeout(() => {
                 zoomInner.classList.add('spin-phase');
