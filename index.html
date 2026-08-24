@@ -841,7 +841,7 @@
                 playFlipSound();
                 zoomInner.classList.remove('spin-phase');
                 zoomInner.classList.add('flip-phase');
-            }, 1800);
+            }, 2500);
 
             setTimeout(() => {
                 cardEl.classList.add('flipped');
@@ -849,7 +849,7 @@
                 zoomInner.innerHTML = '';
                 zoomInner.className = 'zoom-card-inner';
                 isAnimating = false;
-            }, 1800);
+            }, 2500);
         }
 
         function createCardElement(teamColor, player, teamName) {
