@@ -365,33 +365,27 @@
         }
 
         /* Webkit 기반 브라우저(Chrome, Edge, Safari 등) 스크롤바 스타일 */
-
-        /* 1. 스크롤바 전체 너비 설정 */
         .status-panel .status-list::-webkit-scrollbar,
         .modal-content::-webkit-scrollbar {
-            width: 6px; /* 두께를 얇고 깔끔하게 조절 */
+            width: 6px;
         }
 
-        /* 2. 스크롤바 트랙(배경) - 패널 배경색과 동일하게 투명 처리 */
         .status-panel .status-list::-webkit-scrollbar-track,
         .modal-content::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        /* 3. 스크롤바 손잡이(Thumb) - 배경보다 살짝 밝은 톤으로 자연스럽게 처리 */
         .status-panel .status-list::-webkit-scrollbar-thumb,
         .modal-content::-webkit-scrollbar-thumb {
-            background-color: #334155; /* 테두리 색상과 동일한 미드톤 테두리 색 사용 */
-            border-radius: 10px;        /* 둥근 모서리 */
+            background-color: #334155;
+            border-radius: 10px;
         }
 
-        /* 4. 마우스 호버(오버) 시 약간 더 밝아지는 효과 */
         .status-panel .status-list::-webkit-scrollbar-thumb:hover,
         .modal-content::-webkit-scrollbar-thumb:hover {
             background-color: #475569;
         }
 
-        /* FireFox 브라우저 지원용 */
         .status-panel .status-list,
         .modal-content {
             scrollbar-width: thin;
@@ -540,7 +534,7 @@
         </div>
     </div>
 
-    <!-- 라인 수정 모달 추가 -->
+    <!-- 라인 수정 모달 -->
     <div class="modal" id="editLaneModal" style="z-index: 1002;">
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close" onclick="closeModal('editLaneModal')">&times;</span>
@@ -778,6 +772,7 @@
         let editingSelectedLanes = new Set();
         let isAnimating = false;
         let currentMatchedPlayers = {};
+        let isShuffleCooldown = false; // 2초 쿨타임 제어 변수
 
         window.onload = () => { 
             renderCards(); 
@@ -901,7 +896,7 @@
             }
         }
 
-        /* 선수 라인 수정 관련 로직 */
+        /* 선수 라인 수정 로직 */
         function openEditLaneModal(id) {
             const player = playerPool.find(p => p.id === id);
             if (!player) return;
@@ -1021,18 +1016,18 @@
 
         function assign10Players(pool, balanceMode = false) {
             const validMatches = [];
-            const maxAttempts = balanceMode ? 100 : 30;
+            const maxAttempts = balanceMode ? 150 : 80;
 
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
                 const usedPlayerIds = new Set();
                 const teamA = {}, teamB = {};
                 let stepCount = 0;
-                const MAX_STEPS = 500;
+                const MAX_STEPS = 300;
 
                 function solve(teamIndex, posIndex) {
                     stepCount++;
-                    if (stepCount > MAX_STEPS) return false;
+                    if (stepCount > MAX_STEPS) return;
 
                     if (teamIndex === 2) {
                         const scoreA = Object.values(teamA).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
@@ -1040,40 +1035,49 @@
                         const diff = Math.abs(scoreA - scoreB);
 
                         if (!balanceMode || diff <= 1) {
-                            validMatches.push({ teamA: { ...teamA }, teamB: { ...teamB }, scoreA, scoreB, diff });
-                            return true;
+                            validMatches.push({ 
+                                teamA: JSON.parse(JSON.stringify(teamA)), 
+                                teamB: JSON.parse(JSON.stringify(teamB)), 
+                                scoreA, scoreB, diff 
+                            });
                         }
-                        return false;
+                        return;
                     }
 
                     const currentTeam = teamIndex === 0 ? teamA : teamB;
                     const currentPos = POSITIONS[posIndex];
-                    const candidates = shuffledPool.filter(p => !usedPlayerIds.has(p.id) && p.lanes.includes(currentPos));
+                    const candidates = shuffledPool
+                        .filter(p => !usedPlayerIds.has(p.id) && p.lanes.includes(currentPos))
+                        .sort(() => Math.random() - 0.5);
 
                     for (let player of candidates) {
                         usedPlayerIds.add(player.id);
                         currentTeam[currentPos] = player;
+                        
                         const nextPos = (posIndex + 1) % 5;
                         const nextTeam = nextPos === 0 ? teamIndex + 1 : teamIndex;
 
-                        if (solve(nextTeam, nextPos)) return true;
+                        solve(nextTeam, nextPos);
 
                         usedPlayerIds.delete(player.id);
                         delete currentTeam[currentPos];
                     }
-                    return false;
                 }
 
                 solve(0, 0);
-                if (!balanceMode && validMatches.length > 0) return validMatches[0];
+                if (validMatches.length >= 20) break;
             }
 
-            if (validMatches.length > 0) {
+            if (validMatches.length === 0) return null;
+
+            if (balanceMode) {
                 validMatches.sort((a, b) => a.diff - b.diff);
-                return validMatches[0];
+                const minDiff = validMatches[0].diff;
+                const bestMatches = validMatches.filter(m => m.diff === minDiff);
+                return bestMatches[Math.floor(Math.random() * bestMatches.length)];
+            } else {
+                return validMatches[Math.floor(Math.random() * validMatches.length)];
             }
-
-            return null;
         }
 
         function revealPlayerInStatus(playerName) {
@@ -1170,11 +1174,55 @@
             return card;
         }
 
+        /* 2초 쿨타임 처리 함수 */
+        function setShuffleCooldown() {
+            isShuffleCooldown = true;
+            const btnTeam = document.querySelector('.btn-team');
+            const btnBalance = document.querySelector('.btn-balance');
+
+            if (btnTeam) {
+                btnTeam.disabled = true;
+                btnTeam.style.opacity = '0.5';
+                btnTeam.style.cursor = 'not-allowed';
+            }
+            if (btnBalance) {
+                btnBalance.disabled = true;
+                btnBalance.style.opacity = '0.5';
+                btnBalance.style.cursor = 'not-allowed';
+            }
+
+            setTimeout(() => {
+                isShuffleCooldown = false;
+                if (btnTeam) {
+                    btnTeam.disabled = false;
+                    btnTeam.style.opacity = '1';
+                    btnTeam.style.cursor = 'pointer';
+                }
+                if (btnBalance) {
+                    btnBalance.disabled = false;
+                    btnBalance.style.opacity = '1';
+                    btnBalance.style.cursor = 'pointer';
+                }
+            }, 2000);
+        }
+
         function generate5v5Team(balanceMode = false) {
+            if (isShuffleCooldown) return;
+
             if (playerPool.length < 10) {
                 alert(`5vs5 내전을 진행하려면 최소 10명의 카드가 필요합니다. (현재: ${playerPool.length}명)`);
                 return;
             }
+
+            setShuffleCooldown();
+
+            // 기존 매치 보드 및 카드 위치 초기화
+            POSITIONS.forEach(pos => {
+                const blueEl = document.getElementById(`blue-${pos}`);
+                const redEl = document.getElementById(`red-${pos}`);
+                if (blueEl) blueEl.innerHTML = '';
+                if (redEl) redEl.innerHTML = '';
+            });
 
             const matchResult = assign10Players(playerPool, balanceMode);
             if (!matchResult) {
@@ -1202,13 +1250,8 @@
             if (balanceMode) {
                 titleEl.innerHTML = `⚖️ 밸런스 매칭 완료<br>🔵 블루 팀 VS 🔴 레드 팀`;
             } else {
-                titleEl.innerHTML = `🔵 블루 팀 VS 🔴 레드 팀 `;
+                titleEl.innerHTML = `🔵 블루 팀 VS 🔴 레드 팀`;
             }
-
-            POSITIONS.forEach(pos => {
-                document.getElementById(`blue-${pos}`).innerHTML = '';
-                document.getElementById(`red-${pos}`).innerHTML = '';
-            });
 
             const cardQueue = [];
 
