@@ -334,7 +334,7 @@
             font-weight: bold;
             color: #00ffea;
             letter-spacing: 0.5px;
-            pointer-events: none;
+            cursor: pointer;
             user-select: none;
         }
 
@@ -389,7 +389,7 @@
     </style>
 </head>
 <body>
-    <div class="footer-made-gt">Made.GT</div>
+    <div class="footer-made-gt" onclick="handleGtClick()">Made.GT</div>
     <div class="footer-disco-gt">Discord : gangtwi</div>
 
     <div class="top-controls">
@@ -538,6 +538,34 @@
 
         let soundToggleCount = 0;
         let soundToggleTimer = null;
+
+        /* Made.GT 연타 제어 변수 */
+        let gtClickCount = 0;
+        let gtClickTimer = null;
+
+        function handleGtClick() {
+            gtClickCount++;
+
+            // 클릭할 때마다 기존에 돌아가던 타이머를 취소하여 리셋
+            if (gtClickTimer) {
+                clearTimeout(gtClickTimer);
+            }
+
+            // 10번 채우기 전에 클릭 간격이 1초 이상 벌어지면 카운트 리셋
+            gtClickTimer = setTimeout(() => {
+                gtClickCount = 0;
+            }, 1000); 
+
+            // 10번 연속 클릭 달성 시
+            if (gtClickCount >= 10) {
+                clearTimeout(gtClickTimer);
+                gtClickCount = 0;
+                
+                if (isSoundOn()) {
+                    playCustomMp3('sound/0.mp3');
+                }
+            }
+        }
 
         function playCustomMp3(filePath) {
             const audio = new Audio(filePath);
