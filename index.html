@@ -708,7 +708,7 @@
             { id: 4, name: '김태후', tier: '에메랄드', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김태후') },
             { id: 5, name: '김채훈', tier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈') },
             { id: 6, name: '김태윤', tier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤') },
-            { id: 7, name: '손재민', tier: '실버', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민') },
+            { id: 7, name: '손재민', tier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민') },
             { id: 8, name: '유준서', tier: '실버', lanes: ['탑','정글','미드','서폿'], avatarUrl: getAvatarForName('유준서') },
             { id: 9, name: '김주환', tier: '골드', lanes: ['탑','정글','미드','원딜'], avatarUrl: getAvatarForName('김주환') },
             { id: 10, name: '한승기', tier: '골드', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('한승기') },
@@ -717,6 +717,7 @@
             { id: 13, name: '임서진', tier: '에메랄드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('임서진') },
             { id: 14, name: '곽현수', tier: '골드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('곽현수') }
         ];
+        //플레이어등록
 
         const selectedLanes = new Set();
         let isAnimating = false;
@@ -1015,6 +1016,8 @@
             if (playerName === '임서진' && isSoundOn()) playCustomMp3('sound/4.mp3');
             if (playerName === '정세훈' && isSoundOn()) playCustomMp3('sound/5.mp3');
             if (playerName === '김태후' && isSoundOn()) playCustomMp3('sound/6.m4a');
+            if (playerName === '김태윤' && isSoundOn()) playCustomMp3('sound/7.m4a');
+            //사운드등록
 
             setTimeout(() => {
                 zoomInner.classList.add('spin-phase');
@@ -1093,7 +1096,7 @@
             if (balanceMode) {
                 titleEl.innerHTML = `⚖️ 밸런스 매칭 완료<br>🔵 블루 팀 VS 🔴 레드 팀`;
             } else {
-                titleEl.innerHTML = `🔵 블루 팀 (위) VS 🔴 레드 팀 (아래)`;
+                titleEl.innerHTML = `🔵 블루 팀 VS 🔴 레드 팀 `;
             }
 
             POSITIONS.forEach(pos => {
