@@ -9,6 +9,79 @@
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, sans-serif; padding: 20px; background-color: #0f172a; color: #f8fafc; margin: 0; }
         
+        /* 우측 상단 규칙 뽑기 버튼 및 결과 창 */
+        .top-right-rule {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn-rule {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+            border: 1px solid #a78bfa;
+            padding: 10px 18px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-rule:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .rule-display-box {
+            display: none;
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #a78bfa;
+            border-radius: 12px;
+            padding: 14px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            color: #f1f5f9;
+            font-size: 0.88em;
+            line-height: 1.4;
+            word-break: keep-all;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .rule-display-box.show {
+            display: block;
+        }
+
+        .rule-category-title {
+            color: #c4b5fd;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .rule-content {
+            font-size: 0.95em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* 좌측 상단 컨트롤 스위치 */
         .top-controls {
             position: fixed;
@@ -392,6 +465,19 @@
             scrollbar-color: #334155 transparent;
         }
 
+        .lane-title { 
+            /* 기존 스타일 유지 */
+            transition: all 0.4s ease; 
+        }
+        .lane-warning {
+            animation: pulse-warning 1.2s infinite alternate;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+        }
+        @keyframes pulse-warning {
+            from { transform: scale(1); }
+            to { transform: scale(1.08); }
+        }
+
         @keyframes tier-glow {
             0% {
                 box-shadow: 0 0 8px var(--tier-glow-color, rgba(255,255,255,0.3)),
@@ -423,6 +509,15 @@
 <body>
     <div class="footer-made-gt" onclick="handleGtClick()">Made.GT</div>
     <div class="footer-disco-gt">Discord : gangtwi</div>
+
+    <!-- 우측 상단 규칙 뽑기 영역 -->
+    <div class="top-right-rule">
+        <button class="btn-rule" onclick="drawRandomRule()">📜 규칙 뽑기</button>
+        <div class="rule-display-box" id="ruleDisplayBox">
+            <div class="rule-category-title" id="ruleCategoryTitle">카테고리</div>
+            <div class="rule-content" id="ruleContent">규칙 내용이 여기에 표시됩니다.</div>
+        </div>
+    </div>
 
     <div class="top-controls">
         <div class="toggle-item">
@@ -468,11 +563,11 @@
             <h3 id="boardTitle" style="margin-top:0; margin-bottom: 25px;">🔵 블루 팀 (위) VS 🔴 레드 팀 (아래)</h3>
             
             <div class="lane-columns">
-                <div class="lane-col"><div id="blue-탑"></div><div class="lane-title">탑</div><div id="red-탑"></div></div>
-                <div class="lane-col"><div id="blue-정글"></div><div class="lane-title">정글</div><div id="red-정글"></div></div>
-                <div class="lane-col"><div id="blue-미드"></div><div class="lane-title">미드</div><div id="red-미드"></div></div>
-                <div class="lane-col"><div id="blue-원딜"></div><div class="lane-title">원딜</div><div id="red-원딜"></div></div>
-                <div class="lane-col"><div id="blue-서폿"></div><div class="lane-title">서폿</div><div id="red-서폿"></div></div>
+                <div class="lane-col"><div id="blue-탑"></div><div class="lane-title" id="title-탑">탑</div><div id="red-탑"></div></div>
+                <div class="lane-col"><div id="blue-정글"></div><div class="lane-title" id="title-정글">정글</div><div id="red-정글"></div></div>
+                <div class="lane-col"><div id="blue-미드"></div><div class="lane-title" id="title-미드">미드</div><div id="red-미드"></div></div>
+                <div class="lane-col"><div id="blue-원딜"></div><div class="lane-title" id="title-원딜">원딜</div><div id="red-원딜"></div></div>
+                <div class="lane-col"><div id="blue-서폿"></div><div class="lane-title" id="title-서폿">서폿</div><div id="red-서폿"></div></div>
             </div>
         </div>
     </div>
@@ -555,6 +650,63 @@
     </div>
 
     <script>
+        /* 규칙 데이터베이스 (총 30개) */
+        const gameRules = [
+            // 카테고리 1. 포지션 & 라인 스왑 (라인 관련)
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "탑/미드 라인 스왑" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "원딜/서폿 라인 스왑" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "정글/서폿 라인 스왑" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "탑/정글 라인 스왑" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "정글/원딜 라인 스왑" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "10분 이후 탑과 바텀 전원 라인 교체 (11분 전까지 라인 바꾸기 그전에 바꾸면 안됌)" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "5분간 아군 라인 방문 금지 (정글러 카정 및 정글링만 가능)" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "픽창 순서대로 포지션 강제 고정 (1픽 탑, 2픽 정글...)" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "모든 팀원 탑->정글, 정글->미드, 미드->원딜, 원딜->서폿, 서폿->탑 에있는 기본적으로있는 카테고리 캐릭터만 픽 가능" },
+            { category: "카테고리 1. 포지션 & 라인 스왑", rule: "게임 시작 후 3분간 정글링 금지" },
+
+            // 카테고리 2. 챔피언 & 조합 제약 (픽 관련)
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 AP(마법) 챔피언 최소 3명 이상 배치" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 AD(물리) 챔피언 최소 3명 이상 배치" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 탱커 챔피언 최소 2명 이상 필수 픽" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "보호막/힐 보유 유틸 서포터 픽 금지" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "글로벌 궁극기 보유 챔피언 최소 1명 필수 픽 (트페, 쉔, 판테온 등)" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "은신 기술 보유 챔피언 픽 금지" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 근거리 챔피언 최소 3명 이상 배치" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 원거리 챔피언 최소 3명 이상 배치" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "밴 카드 사용 금지 (노밴 진행)" },
+            { category: "카테고리 2. 챔피언 & 조합 제약", rule: "상대 팀이 지정해 준 챔피언 1개 필수 픽" },
+
+            // 카테고리 3. 오브젝트 & 인게임 규칙 (운영 관련)
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "탑/미드 소환사 주문 텔레포트(텔포) 금지" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "팀원 전원 점멸(Flash) 필수 착용" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "첫 번째 드래곤(용) (물,바람,마공) 이면 첫 용 블루팀꺼 (대지,불,화공) 이면 첫 용 레드팀꺼" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "20분 바론 젠 즉시 미드에서 5대5해서 한팀이 한명씩 다 한번씩 죽을때 까지 한타" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "게임 시작 10분간 보이스/핑 사용 금지" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "전원 1코어 아이템 완성 전까지 신발 구매 금지" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "드래곤/바론 피 2000 이하 시 정글러 외 스킬/평타 딜링 금지 (강타 싸움)" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "첫 바위게 절대 금지 (10분 이후부터 가능)" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "모든 라인 포션 구매 금지 (서폿 제외)" },
+            { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "전원 제어 와드 2개 이상 상시 구매(집갈때마다)" }
+        ];
+
+        /* 랜덤 규칙 뽑기 기능 */
+        function drawRandomRule() {
+            playPlaceSound();
+            const randomIndex = Math.floor(Math.random() * gameRules.length);
+            const selected = gameRules[randomIndex];
+
+            const categoryTitleEl = document.getElementById('ruleCategoryTitle');
+            const contentEl = document.getElementById('ruleContent');
+            const boxEl = document.getElementById('ruleDisplayBox');
+
+            categoryTitleEl.innerText = selected.category;
+            contentEl.innerText = `"${selected.rule}"`;
+
+            boxEl.classList.remove('show');
+            void boxEl.offsetWidth; // Trigger reflow for re-animation
+            boxEl.classList.add('show');
+        }
+
         const defaultAvatar = 'img/player.png';
         
         const NAME_AVATAR_MAP = {
@@ -580,6 +732,14 @@
         };
 
         const POSITIONS = ['탑', '정글', '미드', '원딜', '서폿'];
+        const POSITION_MAP = {
+            '탑': 'TOP',
+            '정글': 'JUG',
+            '미드': 'MID',
+            '원딜': 'ADC',
+            '서폿': 'SUP'
+        };
+
         let pastedAvatarData = null;
 
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -1099,6 +1259,7 @@
                 if (cardEl.classList.contains('flipped')) {
                     revealPlayerInStatus(playerName);
                 }
+                checkLaneMatchups();
                 return;
             }
 
@@ -1143,6 +1304,7 @@
             setTimeout(() => {
                 cardEl.classList.add('flipped');
                 revealPlayerInStatus(playerName);
+                checkLaneMatchups();
                 overlay.classList.remove('active');
                 zoomInner.innerHTML = '';
                 zoomInner.className = 'zoom-card-inner';
@@ -1239,6 +1401,8 @@
             POSITIONS.forEach(pos => {
                 const blue = matchResult.teamA[pos];
                 const red = matchResult.teamB[pos];
+                const titleEl = document.getElementById(`title-${pos}`);
+                if(titleEl) resetLaneTitle(titleEl, pos);
                 if (blue) currentMatchedPlayers[blue.name] = { team: 'blue', revealed: false };
                 if (red) currentMatchedPlayers[red.name] = { team: 'red', revealed: false };
             });
@@ -1296,7 +1460,7 @@
                 return;
             }
 
-            let textResult = "";
+            let textResult = "[🔵 블루팀] vs [🔴 레드팀]\n";
             POSITIONS.forEach(pos => {
                 const blueEl = document.getElementById(`blue-${pos}`);
                 const redEl = document.getElementById(`red-${pos}`);
@@ -1304,7 +1468,8 @@
                 const blueName = blueEl ? blueEl.querySelector('.p-name')?.innerText : '';
                 const redName = redEl ? redEl.querySelector('.p-name')?.innerText : '';
 
-                textResult += `${pos} : ${blueName} vs ${redName}\n`;
+                const posCode = POSITION_MAP[pos] || pos;
+                textResult += `${posCode.padEnd(5, ' ')}: ${blueName} vs ${redName}\n`;
             });
 
             navigator.clipboard.writeText(textResult.trim()).then(() => {
@@ -1319,6 +1484,57 @@
                 }, 1500);
             }).catch(err => {
                 alert("복사에 실패했습니다. 권한을 확인해 주세요.");
+            });
+        }
+
+        // 라인 초기화 함수
+        function resetLaneTitle(titleEl, pos) {
+            titleEl.innerHTML = pos;
+            titleEl.classList.remove('lane-warning');
+            titleEl.style.backgroundColor = '#1e293b';
+            titleEl.style.borderColor = '#334155';
+            titleEl.style.color = '#fbbf24';
+        }
+
+        // 티어 비교 및 경고 표시 함수
+        function checkLaneMatchups() {
+            POSITIONS.forEach(pos => {
+                const blueContainer = document.getElementById(`blue-${pos}`);
+                const redContainer = document.getElementById(`red-${pos}`);
+                const titleEl = document.getElementById(`title-${pos}`);
+                
+                if (!blueContainer || !redContainer || !titleEl) return;
+                
+                const blueCard = blueContainer.querySelector('.flip-card');
+                const redCard = redContainer.querySelector('.flip-card');
+                
+                // 양쪽 카드가 모두 뒤집힌 상태(flipped)인지 확인
+                if (blueCard && redCard && blueCard.classList.contains('flipped') && redCard.classList.contains('flipped')) {
+                    const blueTierTxt = blueCard.querySelector('.p-tier').innerText;
+                    const redTierTxt = redCard.querySelector('.p-tier').innerText;
+                    
+                    const blueScore = TIER_COLORS[blueTierTxt] ? TIER_COLORS[blueTierTxt].score : 0;
+                    const redScore = TIER_COLORS[redTierTxt] ? TIER_COLORS[redTierTxt].score : 0;
+                    
+                    const diff = Math.abs(blueScore - redScore);
+                    
+                    // 3단계 이상 차이 시 경고 발생
+                    if (diff >= 3) {
+                        titleEl.innerHTML = `${pos}`;
+                        titleEl.classList.add('lane-warning');
+                        
+                        // diff 3일 때 0.4부터 시작하여 단계가 올라갈수록 진해짐 (최대 0.9)
+                        let redIntensity = Math.min(0.4 + (diff - 3) * 0.2, 0.9); 
+                        
+                        titleEl.style.backgroundColor = `rgba(239, 68, 68, ${redIntensity})`;
+                        titleEl.style.borderColor = '#ef4444';
+                        titleEl.style.color = '#fff';
+                    } else {
+                        resetLaneTitle(titleEl, pos);
+                    }
+                } else {
+                    resetLaneTitle(titleEl, pos);
+                }
             });
         }
     </script>
