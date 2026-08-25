@@ -24,6 +24,7 @@
             border: 1px solid #334155;
             backdrop-filter: blur(8px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 200px;
         }
         .toggle-item {
             display: flex;
@@ -52,6 +53,64 @@
         }
         input:checked + .slider { background-color: #3b82f6; }
         input:checked + .slider:before { transform: translateX(18px); }
+
+        /* 좌측 선수 참가/팀 현황 박스 */
+        .status-panel {
+            position: fixed;
+            top: 115px;
+            left: 15px;
+            z-index: 1000;
+            width: 200px;
+            max-height: calc(100vh - 140px);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        .status-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.9em;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 6px;
+            text-align: center;
+        }
+        .status-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .status-item {
+            font-size: 0.88em;
+            font-weight: bold;
+            padding: 5px 8px;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.5);
+            color: #ffffff;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-item.team-blue {
+            color: #60a5fa !important;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+        .status-item.team-red {
+            color: #f87171 !important;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
 
         .container { max-width: 1000px; margin: 20px auto; background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
         h1 { color: #f8fafc; margin-bottom: 25px; font-size: 2em; }
@@ -268,6 +327,19 @@
 
         .footer-made-gt {
             position: fixed;
+            bottom: 25px;
+            right: 20px;
+            z-index: 999;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00ffea;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .footer-disco-gt {
+            position: fixed;
             bottom: 12px;
             right: 18px;
             z-index: 999;
@@ -277,6 +349,15 @@
             letter-spacing: 0.5px;
             pointer-events: none;
             user-select: none;
+        }
+
+        /* 출전하지 못한/라인이 꽉 차서 제외된 선수 스타일 */
+        .status-item.status-excluded {
+            color: #475569 !important;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #1e293b;
+            opacity: 0.5;
+            text-decoration: line-through;
         }
 
         @keyframes tier-glow {
@@ -296,10 +377,20 @@
                 border-color: var(--tier-color, #cbd5e1);
             }
         }
+
+        #copyTeamBtn {
+            transition: all 0.2s ease;
+            border: 1px solid #475569;
+        }
+        #copyTeamBtn:hover {
+            background: #475569 !important;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
     <div class="footer-made-gt">Made.GT</div>
+    <div class="footer-disco-gt">Discord : gangtwi</div>
 
     <div class="top-controls">
         <div class="toggle-item">
@@ -316,6 +407,13 @@
                 <span class="slider"></span>
             </label>
         </div>
+    </div>
+
+    <!-- 좌측 선수 참가/팀 현황 레이아웃 박스 -->
+    <div class="status-panel">
+        <h4>📋 선수 출전 현황</h4>
+        <div class="status-list" id="statusList"></div>
+        <button class="action-btn" id="copyTeamBtn" onclick="copyTeamInfo()" style="width: 100%; margin-top: 12px; padding: 10px; font-size: 0.85em; background: #334155; justify-content: center; flex-shrink: 0;">📋 팀 정보 복사</button>
     </div>
 
     <div class="zoom-overlay" id="zoomOverlay">
@@ -594,9 +692,11 @@
 
         const selectedLanes = new Set();
         let isAnimating = false;
+        let currentMatchedPlayers = {};
 
         window.onload = () => { 
             renderCards(); 
+            renderStatusPanel();
             setupPasteAndDrop();
             setupToggleEvents();
         };
@@ -703,6 +803,7 @@
             });
 
             renderCards();
+            renderStatusPanel();
             closeModal('addModal');
         }
 
@@ -711,6 +812,7 @@
             if (idx !== -1) {
                 playerPool.splice(idx, 1);
                 renderCards();
+                renderStatusPanel();
             }
         }
 
@@ -730,6 +832,53 @@
                         <strong style="color:#fff;">${p.name}</strong>
                         <span class="p-tier-badge" style="color:${tierInfo.color};">${p.tier}</span>
                         <span style="font-size:0.75em; color:#94a3b8;">${p.lanes.join(', ')}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStatusPanel() {
+            const statusListEl = document.getElementById('statusList');
+            if (!statusListEl) return;
+
+            if (playerPool.length === 0) {
+                statusListEl.innerHTML = '<span style="font-size:0.8em; color:#64748b;">선수 없음</span>';
+                return;
+            }
+
+            const isMatched = Object.keys(currentMatchedPlayers).length > 0;
+
+            const sortedPool = [...playerPool].sort((a, b) => {
+                const isExA = isMatched && !currentMatchedPlayers[a.name];
+                const isExB = isMatched && !currentMatchedPlayers[b.name];
+
+                if (isExA && !isExB) return 1;
+                if (!isExA && isExB) return -1;
+                return 0;
+            });
+
+            statusListEl.innerHTML = sortedPool.map(p => {
+                const state = currentMatchedPlayers[p.name];
+                let teamClass = '';
+                let statusBadge = '';
+
+                if (state && state.revealed) {
+                    if (state.team === 'blue') {
+                        teamClass = 'team-blue';
+                        statusBadge = '<span>🔵</span>';
+                    } else if (state.team === 'red') {
+                        teamClass = 'team-red';
+                        statusBadge = '<span>🔴</span>';
+                    }
+                } else if (isMatched && !state) {
+                    teamClass = 'status-excluded';
+                    statusBadge = '<span style="font-size:0.75em; color:#64748b;">[제외]</span>';
+                }
+
+                return `
+                    <div class="status-item ${teamClass}" id="status-player-${p.name}">
+                        <span>${p.name}</span>
+                        ${statusBadge}
                     </div>
                 `;
             }).join('');
@@ -792,16 +941,25 @@
             return null;
         }
 
+        function revealPlayerInStatus(playerName) {
+            if (currentMatchedPlayers[playerName]) {
+                currentMatchedPlayers[playerName].revealed = true;
+                renderStatusPanel();
+            }
+        }
+
         function handleCardClick(cardEl) {
             if (isAnimating) return;
 
-            // 카드에 해당된 플레이어 닉네임 확인
             const playerNameEl = cardEl.querySelector('.p-name');
             const playerName = playerNameEl ? playerNameEl.innerText.trim() : '';
 
             if (!isMotionOn()) {
                 playFlipSound();
                 cardEl.classList.toggle('flipped');
+                if (cardEl.classList.contains('flipped')) {
+                    revealPlayerInStatus(playerName);
+                }
                 return;
             }
 
@@ -824,22 +982,11 @@
 
             overlay.classList.add('active');
 
-            // 🎯 장유성 카드인 경우 돌기 시작할 때 sound/2.mp3 재생
-            if (playerName === '장유성' && isSoundOn()) {
-                playCustomMp3('sound/2.mp3');
-            }
-
-            if (playerName === '김채훈' && isSoundOn()) {
-                playCustomMp3('sound/3.m4a');
-            }
-
-            if (playerName === '임서진' && isSoundOn()) {
-                playCustomMp3('sound/4.mp3');
-            }
-
-            if (playerName === '정세훈' && isSoundOn()) {
-                playCustomMp3('sound/5.mp3');
-            }
+            if (playerName === '장유성' && isSoundOn()) playCustomMp3('sound/2.mp3');
+            if (playerName === '김채훈' && isSoundOn()) playCustomMp3('sound/3.m4a');
+            if (playerName === '임서진' && isSoundOn()) playCustomMp3('sound/4.mp3');
+            if (playerName === '정세훈' && isSoundOn()) playCustomMp3('sound/5.mp3');
+            if (playerName === '김태후' && isSoundOn()) playCustomMp3('sound/6.m4a');
 
             setTimeout(() => {
                 zoomInner.classList.add('spin-phase');
@@ -853,6 +1000,7 @@
 
             setTimeout(() => {
                 cardEl.classList.add('flipped');
+                revealPlayerInStatus(playerName);
                 overlay.classList.remove('active');
                 zoomInner.innerHTML = '';
                 zoomInner.className = 'zoom-card-inner';
@@ -901,6 +1049,15 @@
                 return;
             }
 
+            currentMatchedPlayers = {};
+            POSITIONS.forEach(pos => {
+                const blue = matchResult.teamA[pos];
+                const red = matchResult.teamB[pos];
+                if (blue) currentMatchedPlayers[blue.name] = { team: 'blue', revealed: false };
+                if (red) currentMatchedPlayers[red.name] = { team: 'red', revealed: false };
+            });
+            renderStatusPanel();
+
             const board = document.getElementById('matchBoard');
             const titleEl = document.getElementById('boardTitle');
             board.style.display = 'block';
@@ -942,6 +1099,45 @@
                         });
                     });
                 }, index * (isMotionOn() ? 120 : 0));
+            });
+        }
+
+        function copyTeamInfo() {
+            const matchedNames = Object.keys(currentMatchedPlayers);
+            if (matchedNames.length < 10) {
+                alert("팀 매칭을 먼저 진행해 주세요!");
+                return;
+            }
+
+            const allRevealed = matchedNames.every(name => currentMatchedPlayers[name].revealed);
+            if (!allRevealed) {
+                alert("모든 카드를 뒤집은 후에 팀 정보를 복사할 수 있습니다!");
+                return;
+            }
+
+            let textResult = "";
+            POSITIONS.forEach(pos => {
+                const blueEl = document.getElementById(`blue-${pos}`);
+                const redEl = document.getElementById(`red-${pos}`);
+
+                const blueName = blueEl ? blueEl.querySelector('.p-name')?.innerText : '';
+                const redName = redEl ? redEl.querySelector('.p-name')?.innerText : '';
+
+                textResult += `${pos} : ${blueName} vs ${redName}\n`;
+            });
+
+            navigator.clipboard.writeText(textResult.trim()).then(() => {
+                const btn = document.getElementById('copyTeamBtn');
+                const originalText = btn.innerText;
+                btn.innerText = "✅ 복사 완료!";
+                btn.style.background = "#059669";
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = "#334155";
+                }, 1500);
+            }).catch(err => {
+                alert("복사에 실패했습니다. 권한을 확인해 주세요.");
             });
         }
     </script>
