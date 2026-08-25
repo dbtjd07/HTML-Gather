@@ -364,6 +364,40 @@
             text-decoration: line-through;
         }
 
+        /* Webkit 기반 브라우저(Chrome, Edge, Safari 등) 스크롤바 스타일 */
+
+        /* 1. 스크롤바 전체 너비 설정 */
+        .status-panel .status-list::-webkit-scrollbar,
+        .modal-content::-webkit-scrollbar {
+            width: 6px; /* 두께를 얇고 깔끔하게 조절 */
+        }
+
+        /* 2. 스크롤바 트랙(배경) - 패널 배경색과 동일하게 투명 처리 */
+        .status-panel .status-list::-webkit-scrollbar-track,
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* 3. 스크롤바 손잡이(Thumb) - 배경보다 살짝 밝은 톤으로 자연스럽게 처리 */
+        .status-panel .status-list::-webkit-scrollbar-thumb,
+        .modal-content::-webkit-scrollbar-thumb {
+            background-color: #334155; /* 테두리 색상과 동일한 미드톤 테두리 색 사용 */
+            border-radius: 10px;        /* 둥근 모서리 */
+        }
+
+        /* 4. 마우스 호버(오버) 시 약간 더 밝아지는 효과 */
+        .status-panel .status-list::-webkit-scrollbar-thumb:hover,
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background-color: #475569;
+        }
+
+        /* FireFox 브라우저 지원용 */
+        .status-panel .status-list,
+        .modal-content {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 transparent;
+        }
+
         @keyframes tier-glow {
             0% {
                 box-shadow: 0 0 8px var(--tier-glow-color, rgba(255,255,255,0.3)),
