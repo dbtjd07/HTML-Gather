@@ -157,6 +157,35 @@
             border-bottom: 1px solid #334155;
             padding-bottom: 6px;
             text-align: center;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .status-panel h4:hover {
+            color: #cbd5e1;
+        }
+        .status-toggle-arrow {
+            display: inline-block;
+            transition: transform 0.25s ease;
+            font-size: 0.8em;
+        }
+        .status-panel.collapsed {
+            max-height: none;
+        }
+        .status-panel.collapsed h4 {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .status-panel.collapsed .status-toggle-arrow {
+            transform: rotate(-90deg);
+        }
+        .status-panel.collapsed .status-list,
+        .status-panel.collapsed #copyTeamBtn {
+            display: none;
         }
         .status-list {
             list-style: none;
@@ -167,6 +196,7 @@
             gap: 6px;
             overflow-y: auto;
             flex: 1;
+            transition: all 0.25s ease;
         }
         .status-item {
             font-size: 0.88em;
@@ -543,8 +573,8 @@
     </div>
 
     <!-- 좌측 선수 참가/팀 현황 레이아웃 박스 -->
-    <div class="status-panel">
-        <h4>📋 선수 출전 현황</h4>
+    <div class="status-panel collapsed" id="statusPanel">
+        <h4 onclick="toggleStatusPanel()">📋 선수 출전 현황 <span class="status-toggle-arrow" id="statusToggleArrow">▼</span></h4>
         <div class="status-list" id="statusList"></div>
         <button class="action-btn" id="copyTeamBtn" onclick="copyTeamInfo()" style="width: 100%; margin-top: 12px; padding: 10px; font-size: 0.85em; background: #334155; justify-content: center; flex-shrink: 0;">📋 팀 정보 복사</button>
     </div>
@@ -1133,6 +1163,12 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // 선수 출전 현황 패널 접기/펼치기
+        function toggleStatusPanel() {
+            const panel = document.getElementById('statusPanel');
+            panel.classList.toggle('collapsed');
         }
 
         function renderStatusPanel() {
