@@ -1333,11 +1333,11 @@
             if (playerName === '김태후' && isSoundOn()) {
                 const rand = Math.random(); // 0.0 ~ 1.0 사이 난수
 
-                if (rand < 0.10) {
-                    // 10% 확률 (이스터에그/히든 사운드)
+                if (rand < 0.25) {
+                    // 25% 확률 (이스터에그/히든 사운드)
                     playCustomMp3('sound/6.m4a');
                 } else {
-                    // 나머지 90% 확률로 고정된 기본 음성 1개 재생
+                    // 나머지 75% 확률로 고정된 기본 음성 1개 재생
                     playCustomMp3('sound/12.mp3');
                 }
             }
