@@ -951,7 +951,7 @@
             { id: 1, name: '장유성', tier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('장유성') },
             { id: 2, name: '정세훈', tier: '플래티넘', lanes: ['미드','원딜'], avatarUrl: getAvatarForName('정세훈') },
             { id: 3, name: '김민규', tier: '마스터', lanes: ['탑','정글','미드','원딜'], avatarUrl: getAvatarForName('김민규') },
-            { id: 4, name: '김태후', tier: '에메랄드', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김태후') },
+            { id: 4, name: '김태후', tier: '에메랄드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('김태후') },
             { id: 5, name: '김채훈', tier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈') },
             { id: 6, name: '김태윤', tier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤') },
             { id: 7, name: '손재민', tier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민') },
@@ -1330,7 +1330,17 @@
             if (playerName === '김채훈' && isSoundOn()) playCustomMp3('sound/3.m4a');
             if (playerName === '임서진' && isSoundOn()) playCustomMp3('sound/4.mp3');
             if (playerName === '정세훈' && isSoundOn()) playCustomMp3('sound/5.mp3');
-            if (playerName === '김태후' && isSoundOn()) playCustomMp3('sound/6.m4a');
+            if (playerName === '김태후' && isSoundOn()) {
+                const rand = Math.random(); // 0.0 ~ 1.0 사이 난수
+
+                if (rand < 0.10) {
+                    // 10% 확률 (이스터에그/히든 사운드)
+                    playCustomMp3('sound/6.m4a');
+                } else {
+                    // 나머지 90% 확률로 고정된 기본 음성 1개 재생
+                    playCustomMp3('sound/12.mp3');
+                }
+            }
             if (playerName === '김태윤' && isSoundOn()) playCustomMp3('sound/7.m4a');
             if (playerName === '한승기' && isSoundOn()) playCustomMp3('sound/8.mp3');
             if (playerName === '김주환' && isSoundOn()) playCustomMp3('sound/9.mp3');
