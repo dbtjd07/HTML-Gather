@@ -1237,7 +1237,14 @@
                 modalListEl.innerHTML = '<p style="color:#64748b;">등록된 카드가 없습니다.</p>';
                 return;
             }
-            modalListEl.innerHTML = playerPool.map(p => {
+
+            const sortedPool = [...playerPool].sort((a, b) => {
+                const scoreA = TIER_COLORS[a.tier]?.score || 0;
+                const scoreB = TIER_COLORS[b.tier]?.score || 0;
+                return scoreB - scoreA;
+            });
+
+            modalListEl.innerHTML = sortedPool.map(p => {
                 const tierInfo = TIER_COLORS[p.tier] || TIER_COLORS['언랭'];
                 return `
                     <div class="card-simple">
