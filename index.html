@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>롤 5vs5 카드 뒤집기 내전</title>
     <meta property="og:site_name" content="GangTwi">
-    <meta property="og:title" content="⚔️️ 롤 5vs5 카드 뒤집기 내전">
+    <meta property="og:title" content="⚔ 롤 5vs5 카드 뒤집기 내전">
     <meta property="og:description" content="롤 내전 짜버리기~! 카드로 우리 팀원을 뽑아서 5대5 내전하자!">
     <meta property="og:url" content="https://dbtjd07.github.io/HTML-Gather/">
     <meta property="og:type" content="website">
@@ -14,7 +14,6 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, sans-serif; padding: 20px; background-color: #0f172a; color: #f8fafc; margin: 0; }
-        
         
         /* 우측 상단 규칙 뽑기 버튼 및 결과 창 */
         .top-right-rule {
@@ -231,7 +230,8 @@
         .btn-add { background: #2563eb; } .btn-add:hover { background: #1d4ed8; transform: translateY(-2px); }
         .btn-view { background: #64748b; } .btn-view:hover { background: #475569; transform: translateY(-2px); }
         .btn-team { background: #059669; } .btn-team:hover { background: #047857; transform: translateY(-2px); }
-        
+        .btn-draft { background: #8b5cf6; } .btn-draft:hover { background: #7c3aed; transform: translateY(-2px); }
+
         /* 정사각형 밸런스 버튼 */
         .btn-balance {
             width: 48px;
@@ -563,6 +563,312 @@
             background: #475569 !important;
             transform: translateY(-1px);
         }
+
+        /* ----------------------------------------------------
+           🎲 라인 대표 드래프트 모달 전용 확장 및 3단 레이아웃 스타일
+        ---------------------------------------------------- */
+        #draftModal .modal-content {
+            max-width: 1250px !important;
+            width: 96%;
+            padding: 25px 30px;
+        }
+
+        .draft-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .draft-title-main {
+            font-size: 1.45em;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-shadow: 0 2px 10px rgba(139, 92, 246, 0.4);
+        }
+        .draft-status-desc {
+            font-size: 1.1em;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .draft-turn-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .draft-turn-blue { background: rgba(59, 130, 246, 0.25); border: 1px solid #3b82f6; color: #60a5fa; }
+        .draft-turn-red { background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #f87171; }
+        
+        /* 대표 선수 2인 대형 카드 영역 (고유 티어 색상 지정) */
+        .draft-captains-banner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid #334155;
+            border-radius: 16px;
+        }
+        .captain-card-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            border-radius: 14px;
+            background: #1e293b;
+            min-width: 260px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .captain-card-wrapper.blue-captain { border: 2px solid #3b82f6; }
+        .captain-card-wrapper.red-captain { border: 2px solid #ef4444; }
+
+        /* 선택 타임 네온 빛남 효과 */
+        .captain-card-wrapper.active-turn-glow.blue-captain {
+            border-color: #60a5fa;
+            box-shadow: 0 0 25px #3b82f6, 0 0 50px rgba(59, 130, 246, 0.7), inset 0 0 15px rgba(59, 130, 246, 0.5);
+            animation: supremeGlowBlue 1.2s infinite alternate ease-in-out;
+        }
+        .captain-card-wrapper.active-turn-glow.red-captain {
+            border-color: #f87171;
+            box-shadow: 0 0 25px #ef4444, 0 0 50px rgba(239, 68, 68, 0.7), inset 0 0 15px rgba(239, 68, 68, 0.5);
+            animation: supremeGlowRed 1.2s infinite alternate ease-in-out;
+        }
+
+        @keyframes supremeGlowBlue {
+            0% { box-shadow: 0 0 15px #3b82f6, 0 0 30px rgba(59, 130, 246, 0.5); transform: scale(1); }
+            100% { box-shadow: 0 0 30px #60a5fa, 0 0 60px rgba(59, 130, 246, 0.9), inset 0 0 20px rgba(59, 130, 246, 0.8); transform: scale(1.03); }
+        }
+        @keyframes supremeGlowRed {
+            0% { box-shadow: 0 0 15px #ef4444, 0 0 30px rgba(239, 68, 68, 0.5); transform: scale(1); }
+            100% { box-shadow: 0 0 30px #f87171, 0 0 60px rgba(239, 68, 68, 0.9), inset 0 0 20px rgba(239, 68, 68, 0.8); transform: scale(1.03); }
+        }
+
+        .captain-card-wrapper img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--tier-color, #fbbf24);
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .captain-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: left;
+            flex: 1;
+        }
+        .captain-team-tag {
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .blue-captain .captain-team-tag { color: #60a5fa; }
+        .red-captain .captain-team-tag { color: #f87171; }
+        .captain-name {
+            font-size: 1.2em;
+            font-weight: 800;
+            color: #fff;
+        }
+        .captain-tier {
+            font-size: 0.85em;
+            font-weight: bold;
+            color: var(--tier-color, #cbd5e1); /* 고유 티어 색상 반영 */
+        }
+
+        .draft-main-layout {
+            display: flex;
+            gap: 22px;
+            align-items: stretch;
+            margin-top: 10px;
+        }
+
+        .draft-side-panel {
+            width: 270px;
+            flex-shrink: 0;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .draft-side-panel.blue { border-color: rgba(59, 130, 246, 0.5); }
+        .draft-side-panel.red { border-color: rgba(239, 68, 68, 0.5); }
+
+        .draft-side-panel h3 {
+            margin: 0 0 14px 0;
+            font-size: 1.1em;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1e293b;
+            letter-spacing: 0.5px;
+        }
+
+        .draft-center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .draft-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            width: 100%;
+        }
+
+        .draft-lane-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            border-radius: 14px;
+            padding: 16px 12px;
+            text-align: center;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        .draft-lane-card:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+        }
+        .draft-lane-card .lane-icon {
+            font-size: 1.8em;
+            margin-bottom: 4px;
+        }
+        .draft-lane-card .lane-name {
+            font-weight: bold;
+            color: #fbbf24;
+            font-size: 1.15em;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            width: 100%;
+            padding-bottom: 6px;
+        }
+        .draft-lane-card .candidate-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-pick-candidate {
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #fff;
+            padding: 10px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            width: 100%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .btn-pick-candidate:hover {
+            background: #1e293b;
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.35);
+        }
+        .btn-pick-candidate img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #475569;
+            flex-shrink: 0;
+        }
+        .btn-pick-candidate .cand-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .btn-pick-candidate .cand-name {
+            font-size: 0.95em;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .btn-pick-candidate .cand-tier {
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .draft-player-slot {
+            font-size: 0.88em;
+            padding: 9px 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .draft-player-slot .slot-pos {
+            color: #fbbf24;
+            font-weight: bold;
+            width: 34px;
+            font-size: 0.95em;
+            text-align: center;
+        }
+        .draft-player-slot img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #475569;
+            flex-shrink: 0;
+        }
+        .draft-player-slot .slot-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+        .draft-player-slot .slot-name {
+            color: #fff;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .draft-player-slot .slot-tier {
+            font-size: 0.75em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -620,6 +926,7 @@
             <button class="action-btn btn-add" onclick="openModal('addModal')">➕ 카드 등록</button>
             <button class="action-btn btn-view" onclick="openModal('viewModal')">🎴 전체 카드 확인 (<span id="card-count">0</span>)</button>
             <button class="action-btn btn-team" onclick="generate5v5Team(false)">🃏 5vs5 카드 섞기</button>
+            <button class="action-btn btn-draft" onclick="startDraftMode()">🎲 라인 대표 드래프트</button>
             <button class="btn-balance" onclick="generate5v5Team(true)" title="티어 밸런스 매칭">⚖️</button>
         </div>
 
@@ -713,10 +1020,65 @@
         </div>
     </div>
 
+    <!-- 라인 대표 드래프트 모달 -->
+    <div class="modal" id="draftModal" style="z-index: 1003;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('draftModal')">&times;</span>
+            
+            <div class="draft-header">
+                <div class="draft-title-main">🎲 라인 대표 드래프트</div>
+                <div id="draftStatusInfo" class="draft-status-desc">대표 라인을 추첨 중입니다...</div>
+                <div id="draftTurnBadge" class="draft-turn-badge draft-turn-blue">🔵 블루 팀 지명 차례</div>
+            </div>
+
+            <!-- 상단 중앙 대형 대표 선수 배너 -->
+            <div class="draft-captains-banner" id="draftCaptainsBanner">
+                <!-- 블루 대표 카드 -->
+                <div class="captain-card-wrapper blue-captain" id="blueCaptainCard">
+                    <img id="blueCaptainImg" src="" alt="Blue Captain" onerror="this.src='img/player.png'">
+                    <div class="captain-info">
+                        <span class="captain-team-tag">🔵 블루 대표 (<span id="repLaneNameBlue">탑</span>)</span>
+                        <span class="captain-name" id="blueCaptainName">블루대표</span>
+                        <span class="captain-tier" id="blueCaptainTier">플래티넘</span>
+                    </div>
+                </div>
+                <!-- VS 기호 -->
+                <div style="font-size: 1.4em; font-weight: 800; color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);">VS</div>
+                <!-- 레드 대표 카드 -->
+                <div class="captain-card-wrapper red-captain" id="redCaptainCard">
+                    <img id="redCaptainImg" src="" alt="Red Captain" onerror="this.src='img/player.png'">
+                    <div class="captain-info">
+                        <span class="captain-team-tag">🔴 레드 대표 (<span id="repLaneNameRed">탑</span>)</span>
+                        <span class="captain-name" id="redCaptainName">레드대표</span>
+                        <span class="captain-tier" id="redCaptainTier">플래티넘</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="draft-main-layout">
+                <!-- 좌측 블루팀 목록 -->
+                <div class="draft-side-panel blue">
+                    <h3 style="color: #60a5fa;">🔵 블루팀 목록</h3>
+                    <div id="draftBlueList"></div>
+                </div>
+
+                <!-- 중앙 라인 대표 카드 지명 존 -->
+                <div class="draft-center-panel">
+                    <div id="draftLaneContainer" class="draft-grid"></div>
+                </div>
+
+                <!-- 우측 레드팀 목록 -->
+                <div class="draft-side-panel red">
+                    <h3 style="color: #f87171;">🔴 레드팀 목록</h3>
+                    <div id="draftRedList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         /* 규칙 데이터베이스 (총 30개) */
         const gameRules = [
-            // 카테고리 1. 포지션 & 라인 스왑 (라인 관련)
             { category: "카테고리 1. 포지션 & 라인 스왑", rule: "탑/미드 라인 스왑" },
             { category: "카테고리 1. 포지션 & 라인 스왑", rule: "원딜/서폿 라인 스왑" },
             { category: "카테고리 1. 포지션 & 라인 스왑", rule: "정글/서폿 라인 스왑" },
@@ -728,7 +1090,6 @@
             { category: "카테고리 1. 포지션 & 라인 스왑", rule: "모든 팀원 탑->정글, 정글->미드, 미드->원딜, 원딜->서폿, 서폿->탑 에있는 기본적으로있는 카테고리 캐릭터만 픽 가능" },
             { category: "카테고리 1. 포지션 & 라인 스왑", rule: "게임 시작 후 3분간 정글링 금지" },
 
-            // 카테고리 2. 챔피언 & 조합 제약 (픽 관련)
             { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 AP(마법) 챔피언 최소 3명 이상 배치" },
             { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 AD(물리) 챔피언 최소 3명 이상 배치" },
             { category: "카테고리 2. 챔피언 & 조합 제약", rule: "팀 내 탱커 챔피언 최소 2명 이상 필수 픽" },
@@ -740,7 +1101,6 @@
             { category: "카테고리 2. 챔피언 & 조합 제약", rule: "밴 카드 사용 금지 (노밴 진행)" },
             { category: "카테고리 2. 챔피언 & 조합 제약", rule: "상대 팀이 지정해 준 챔피언 1개 필수 픽" },
 
-            // 카테고리 3. 오브젝트 & 인게임 규칙 (운영 관련)
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "탑/미드 소환사 주문 텔레포트(텔포) 금지" },
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "팀원 전원 점멸(Flash) 필수 착용" },
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "첫 번째 드래곤(용) (물,바람,마공) 이면 첫 용 블루팀꺼 (대지,불,화공) 이면 첫 용 레드팀꺼" },
@@ -791,7 +1151,8 @@
             '강희성': 'img/KHS.jpg',
             '이선재': 'img/LSJ.jpg',
             '최원혁': 'img/CWH.jpg',
-            '박재현': 'img/PJH.jpg'
+            '박재현': 'img/PJH.jpg',
+            '김혜준': 'img/KHJ.jpg'
         };
 
         const getAvatarForName = (name, customAvatar = null) => {
@@ -849,6 +1210,28 @@
             audio.play().catch(err => {
                 console.warn('오디오 재생 실패:', err);
             });
+        }
+
+        /* 선수별 전용 고유 사운드 재생 함수 */
+        function playPlayerSound(playerName) {
+            if (!isSoundOn()) return;
+
+            if (playerName === '장유성') playCustomMp3('sound/2.mp3');
+            else if (playerName === '김채훈') playCustomMp3('sound/3.m4a');
+            else if (playerName === '임서진') playCustomMp3('sound/4.mp3');
+            else if (playerName === '정세훈') playCustomMp3('sound/5.mp3');
+            else if (playerName === '김태후') {
+                const rand = Math.floor(Math.random() * 11); // 0 ~ 10
+                playCustomMp3(`sound/t_${rand}.m4a`);
+            }
+            else if (playerName === '김태윤') playCustomMp3('sound/6.m4a');
+            else if (playerName === '한승기') playCustomMp3('sound/7.mp3');
+            else if (playerName === '김주환') playCustomMp3('sound/8.mp3');
+            else if (playerName === '강희성') playCustomMp3('sound/9.mp3');
+            else if (playerName === '김민규') playCustomMp3('sound/10.mp3');
+            else if (playerName === '손재민') playCustomMp3('sound/11.mp3');
+            else if (playerName === '곽현수') playCustomMp3('sound/12.m4a');
+            else if (playerName === '오치형') playCustomMp3('sound/13.mp3');
         }
 
         function initAudio() {
@@ -995,8 +1378,9 @@
             { id: 14, name: '곽현수', tier: '플래티넘', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('곽현수') },
             { id: 15, name: '강희성', tier: '골드', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('강희성') },
             { id: 16, name: '이선재', tier: '플래티넘', lanes: ['탑'], avatarUrl: getAvatarForName('이선재') },
-            { id: 17, name: '최원혁', tier: '플래티넘', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁') },
-            { id: 18, name: '박재현', tier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현') }
+            { id: 17, name: '최원혁', tier: '실버', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁') },
+            { id: 18, name: '박재현', tier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현') },
+            { id: 19, name: '김혜준', tier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준') }
         ];
 
         const selectedLanes = new Set();
@@ -1368,24 +1752,9 @@
 
             overlay.classList.add('active');
 
-            if (playerName === '장유성' && isSoundOn()) playCustomMp3('sound/2.mp3');
-            if (playerName === '김채훈' && isSoundOn()) playCustomMp3('sound/3.m4a');
-            if (playerName === '임서진' && isSoundOn()) playCustomMp3('sound/4.mp3');
-            if (playerName === '정세훈' && isSoundOn()) playCustomMp3('sound/5.mp3');
-            if (playerName === '김태후' && isSoundOn()) {
-                const rand = Math.floor(Math.random() * 11); // 0 ~ 10
+            // 클릭 시 해당 선수 고유 사운드 재생
+            playPlayerSound(playerName);
 
-                playCustomMp3(`sound/t_${rand}.m4a`);
-            }
-            if (playerName === '김태윤' && isSoundOn()) playCustomMp3('sound/6.m4a');
-            if (playerName === '한승기' && isSoundOn()) playCustomMp3('sound/7.mp3');
-            if (playerName === '김주환' && isSoundOn()) playCustomMp3('sound/8.mp3');
-            if (playerName === '강희성' && isSoundOn()) playCustomMp3('sound/9.mp3');
-            if (playerName === '김민규' && isSoundOn()) playCustomMp3('sound/10.mp3');
-            if (playerName === '손재민' && isSoundOn()) playCustomMp3('sound/11.mp3');
-            if (playerName === '곽현수' && isSoundOn()) playCustomMp3('sound/12.m4a');
-            if (playerName === '오치형' && isSoundOn()) playCustomMp3('sound/13.mp3');
-            
             setTimeout(() => {
                 zoomInner.classList.add('spin-phase');
             }, 50);
@@ -1407,9 +1776,9 @@
             }, 2500);
         }
 
-        function createCardElement(teamColor, player, teamName) {
+        function createCardElement(teamColor, player, teamName, forceFlipped = false) {
             const card = document.createElement('div');
-            card.className = `flip-card ${teamColor}-team`;
+            card.className = `flip-card ${teamColor}-team ${forceFlipped ? 'flipped' : ''}`;
             card.onclick = () => handleCardClick(card);
 
             const tierInfo = TIER_COLORS[player.tier] || TIER_COLORS['언랭'];
@@ -1437,6 +1806,7 @@
             isShuffleCooldown = true;
             const btnTeam = document.querySelector('.btn-team');
             const btnBalance = document.querySelector('.btn-balance');
+            const btnDraft = document.querySelector('.btn-draft');
 
             if (btnTeam) {
                 btnTeam.disabled = true;
@@ -1447,6 +1817,11 @@
                 btnBalance.disabled = true;
                 btnBalance.style.opacity = '0.5';
                 btnBalance.style.cursor = 'not-allowed';
+            }
+            if (btnDraft) {
+                btnDraft.disabled = true;
+                btnDraft.style.opacity = '0.5';
+                btnDraft.style.cursor = 'not-allowed';
             }
 
             setTimeout(() => {
@@ -1460,6 +1835,11 @@
                     btnBalance.disabled = false;
                     btnBalance.style.opacity = '1';
                     btnBalance.style.cursor = 'pointer';
+                }
+                if (btnDraft) {
+                    btnDraft.disabled = false;
+                    btnDraft.style.opacity = '1';
+                    btnDraft.style.cursor = 'pointer';
                 }
             }, 2000);
         }
@@ -1492,45 +1872,47 @@
                 return;
             }
 
+            renderMatchResultOnBoard(matchResult.teamA, matchResult.teamB, balanceMode ? '⚖️ 밸런스 매칭 완료<br>🔵 블루 팀 VS 🔴 레드 팀' : '🔵 블루 팀 VS 🔴 레드 팀');
+        }
+
+        function renderMatchResultOnBoard(teamA, teamB, titleText, forceFlipped = false) {
             currentMatchedPlayers = {};
             POSITIONS.forEach(pos => {
-                const blue = matchResult.teamA[pos];
-                const red = matchResult.teamB[pos];
+                const blue = teamA[pos];
+                const red = teamB[pos];
                 const titleEl = document.getElementById(`title-${pos}`);
                 if(titleEl) resetLaneTitle(titleEl, pos);
-                if (blue) currentMatchedPlayers[blue.name] = { team: 'blue', revealed: false };
-                if (red) currentMatchedPlayers[red.name] = { team: 'red', revealed: false };
+                if (blue) currentMatchedPlayers[blue.name] = { team: 'blue', revealed: forceFlipped };
+                if (red) currentMatchedPlayers[red.name] = { team: 'red', revealed: forceFlipped };
             });
             renderStatusPanel();
 
             const board = document.getElementById('matchBoard');
             const titleEl = document.getElementById('boardTitle');
             board.style.display = 'block';
-
-            if (balanceMode) {
-                titleEl.innerHTML = `⚖️ 밸런스 매칭 완료<br>🔵 블루 팀 VS 🔴 레드 팀`;
-            } else {
-                titleEl.innerHTML = `🔵 블루 팀 VS 🔴 레드 팀`;
-            }
+            titleEl.innerHTML = titleText;
 
             const cardQueue = [];
 
             POSITIONS.forEach(pos => {
-                const bluePlayer = matchResult.teamA[pos];
-                const cardA = createCardElement('blue', bluePlayer, '블루팀');
+                const bluePlayer = teamA[pos];
+                const cardA = createCardElement('blue', bluePlayer, '블루팀', forceFlipped);
                 cardQueue.push({ containerId: `blue-${pos}`, cardEl: cardA });
             });
 
             POSITIONS.forEach(pos => {
-                const redPlayer = matchResult.teamB[pos];
-                const cardB = createCardElement('red', redPlayer, '레드팀');
+                const redPlayer = teamB[pos];
+                const cardB = createCardElement('red', redPlayer, '레드팀', forceFlipped);
                 cardQueue.push({ containerId: `red-${pos}`, cardEl: cardB });
             });
 
             cardQueue.forEach((item, index) => {
                 setTimeout(() => {
                     const container = document.getElementById(item.containerId);
-                    container.appendChild(item.cardEl);
+                    if(container) {
+                        container.innerHTML = '';
+                        container.appendChild(item.cardEl);
+                    }
                     playPlaceSound();
                     
                     requestAnimationFrame(() => {
@@ -1540,6 +1922,10 @@
                     });
                 }, index * (isMotionOn() ? 120 : 0));
             });
+
+            if (forceFlipped) {
+                checkLaneMatchups();
+            }
         }
 
         function copyTeamInfo() {
@@ -1630,6 +2016,249 @@
                     resetLaneTitle(titleEl, pos);
                 }
             });
+        }
+
+        /* ----------------------------------------------------
+           🎲 라인 대표 드래프트 시스템 (4회 무작위 턴 & 연속 3번 동일팀 방지)
+        ---------------------------------------------------- */
+        let draftState = {
+            step: 0,
+            repLane: '',
+            remainingLanes: [],
+            blueTeam: {},
+            redTeam: {},
+            matchData: null,
+            turnOrders: [] // 총 4단계 무작위 턴 순서 배열 ('blue' 또는 'red')
+        };
+
+        const LANE_ICONS = {
+            '탑': '🛡️',
+            '정글': '🌲',
+            '미드': '⚔️',
+            '원딜': '🏹',
+            '서폿': '🌿'
+        };
+
+        // 동일 팀 연속 3회 지명 방지 무작위 턴 배열 생성 함수
+        function generateRandomTurnOrders() {
+            const teams = ['blue', 'red'];
+            let orders = [];
+            let isValid = false;
+
+            while (!isValid) {
+                orders = [];
+                for (let i = 0; i < 4; i++) {
+                    orders.push(teams[Math.floor(Math.random() * 2)]);
+                }
+
+                // 3연속 동일 팀('blue','blue','blue' 또는 'red','red','red') 검사
+                let isThreeInARow = false;
+                if (orders[0] === orders[1] && orders[1] === orders[2]) isThreeInARow = true;
+                if (orders[1] === orders[2] && orders[2] === orders[3]) isThreeInARow = true;
+
+                if (!isThreeInARow) {
+                    isValid = true;
+                }
+            }
+            return orders;
+        }
+
+        function startDraftMode() {
+            if (isShuffleCooldown) return;
+            if (playerPool.length < 10) {
+                alert(`5vs5 내전을 진행하려면 최소 10명의 카드가 필요합니다. (현재: ${playerPool.length}명)`);
+                return;
+            }
+
+            const matchResult = assign10Players(playerPool, false);
+            if (!matchResult) {
+                alert('등록된 선수들의 희망 라인 조합으로 5대5 팀을 만들 수 없습니다.');
+                return;
+            }
+
+            draftState.matchData = matchResult;
+            draftState.blueTeam = {};
+            draftState.redTeam = {};
+            draftState.step = 0;
+
+            // 동일 팀 3연속 선택 차단 기능이 포함된 무작위 턴 순서 생성
+            draftState.turnOrders = generateRandomTurnOrders();
+
+            // 1. 대표 라인 추첨 (탑/정글/미드/원딜/서폿 중 랜덤 1개)
+            const randomLaneIdx = Math.floor(Math.random() * POSITIONS.length);
+            draftState.repLane = POSITIONS[randomLaneIdx];
+
+            // 2. 대표 라인의 2개 카드는 캡틴으로 확정 (블루/레드 팀 지정)
+            draftState.blueTeam[draftState.repLane] = matchResult.teamA[draftState.repLane];
+            draftState.redTeam[draftState.repLane] = matchResult.teamB[draftState.repLane];
+
+            // 3. 대표 라인을 제외한 남은 4개 라인 생성
+            draftState.remainingLanes = POSITIONS.filter(l => l !== draftState.repLane);
+
+            openModal('draftModal');
+            updateDraftUI();
+            playPlaceSound();
+        }
+
+        function updateDraftUI() {
+            const statusInfoEl = document.getElementById('draftStatusInfo');
+            const turnBadgeEl = document.getElementById('draftTurnBadge');
+            const laneContainerEl = document.getElementById('draftLaneContainer');
+
+            const blueRepPlayer = draftState.blueTeam[draftState.repLane];
+            const redRepPlayer = draftState.redTeam[draftState.repLane];
+            
+            const blueRepName = blueRepPlayer?.name || '블루대표';
+            const redRepName = redRepPlayer?.name || '레드대표';
+
+            const blueTierInfo = TIER_COLORS[blueRepPlayer?.tier] || TIER_COLORS['언랭'];
+            const redTierInfo = TIER_COLORS[redRepPlayer?.tier] || TIER_COLORS['언랭'];
+
+            // 상단 대형 대표 카드 정보 및 티어 고유 색상 설정
+            document.getElementById('repLaneNameBlue').innerText = draftState.repLane;
+            document.getElementById('repLaneNameRed').innerText = draftState.repLane;
+            
+            document.getElementById('blueCaptainName').innerText = blueRepName;
+            
+            const blueTierEl = document.getElementById('blueCaptainTier');
+            blueTierEl.innerText = blueRepPlayer?.tier || '언랭';
+            blueTierEl.style.color = blueTierInfo.color;
+
+            const blueImgEl = document.getElementById('blueCaptainImg');
+            blueImgEl.src = blueRepPlayer?.avatarUrl || defaultAvatar;
+            blueImgEl.style.borderColor = blueTierInfo.color;
+
+            document.getElementById('redCaptainName').innerText = redRepName;
+
+            const redTierEl = document.getElementById('redCaptainTier');
+            redTierEl.innerText = redRepPlayer?.tier || '언랭';
+            redTierEl.style.color = redTierInfo.color;
+
+            const redImgEl = document.getElementById('redCaptainImg');
+            redImgEl.src = redRepPlayer?.avatarUrl || defaultAvatar;
+            redImgEl.style.borderColor = redTierInfo.color;
+
+            // 턴에 따라 대표 카드에 활성화 네온 가시성 부여
+            const blueCaptainCard = document.getElementById('blueCaptainCard');
+            const redCaptainCard = document.getElementById('redCaptainCard');
+
+            blueCaptainCard.classList.remove('active-turn-glow');
+            redCaptainCard.classList.remove('active-turn-glow');
+
+            // 차례 변경 시 알림 소리 재생
+            playPlaceSound();
+
+            // 현재 턴의 팀 구하기
+            const currentTurnTeam = draftState.turnOrders[draftState.step] || 'blue';
+            const currentRepName = currentTurnTeam === 'blue' ? blueRepName : redRepName;
+
+            if (currentTurnTeam === 'blue') {
+                turnBadgeEl.className = 'draft-turn-badge draft-turn-blue';
+                turnBadgeEl.innerText = `🔵 블루 팀 [${blueRepName}] 지명 차례 (${draftState.step + 1}/4)`;
+                statusInfoEl.innerHTML = `대표 라인 <b>[${draftState.repLane}]</b> 기반 무작위 턴 방식!<br>블루팀 [${blueRepName}] 님이 원하는 선수를 클릭하여 지명하세요!<br><small>픽순서는 랜덤입니다 (연속 3번이상 픽은 제한 되어 있습니다!)</small>`;
+                blueCaptainCard.classList.add('active-turn-glow');
+            } else {
+                turnBadgeEl.className = 'draft-turn-badge draft-turn-red';
+                turnBadgeEl.innerText = `🔴 레드 팀 [${redRepName}] 지명 차례 (${draftState.step + 1}/4)`;
+                statusInfoEl.innerHTML = `대표 라인 <b>[${draftState.repLane}]</b> 기반 무작위 턴 방식!<br>레드팀 [${redRepName}] 님이 원하는 선수를 클릭하여 지명하세요!<br><small>픽순서는 랜덤입니다 (연속 3번이상 픽은 제한 되어 있습니다!)</small>`;
+                redCaptainCard.classList.add('active-turn-glow');
+            }
+
+            // 남아있는 라인 후보 카드가 가로로 펼쳐지도록 렌더링
+            laneContainerEl.innerHTML = draftState.remainingLanes.map(lane => {
+                const candA = draftState.matchData.teamA[lane];
+                const candB = draftState.matchData.teamB[lane];
+                const tierInfoA = TIER_COLORS[candA.tier] || TIER_COLORS['언랭'];
+                const tierInfoB = TIER_COLORS[candB.tier] || TIER_COLORS['언랭'];
+
+                return `
+                    <div class="draft-lane-card">
+                        <div class="lane-icon">${LANE_ICONS[lane] || '⚔️'}</div>
+                        <div class="lane-name">${lane}</div>
+                        <div class="candidate-buttons">
+                            <button class="btn-pick-candidate" onclick="pickDraftPlayer('${lane}', 'A')">
+                                <img src="${candA.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfoA.color}">
+                                <div class="cand-info">
+                                    <span class="cand-name">${candA.name}</span>
+                                    <span class="cand-tier" style="color:${tierInfoA.color};">${candA.tier}</span>
+                                </div>
+                            </button>
+                            <button class="btn-pick-candidate" onclick="pickDraftPlayer('${lane}', 'B')">
+                                <img src="${candB.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfoB.color}">
+                                <div class="cand-info">
+                                    <span class="cand-name">${candB.name}</span>
+                                    <span class="cand-tier" style="color:${tierInfoB.color};">${candB.tier}</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderDraftTeamLists();
+        }
+
+        /* 프로필 카드 형태로 좌/우 측면 팀원 지명 목록 렌더링 */
+        function renderDraftTeamLists() {
+            const blueListEl = document.getElementById('draftBlueList');
+            const redListEl = document.getElementById('draftRedList');
+
+            const createSlotHTML = (pos, p) => {
+                if (!p) {
+                    return `
+                        <div class="draft-player-slot">
+                            <span class="slot-pos">${pos}</span>
+                            <div class="slot-info">
+                                <span class="slot-name" style="color:#64748b; font-weight:normal;">(미지명)</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                const tierInfo = TIER_COLORS[p.tier] || TIER_COLORS['언랭'];
+                return `
+                    <div class="draft-player-slot">
+                        <span class="slot-pos">${pos}</span>
+                        <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}">
+                        <div class="slot-info">
+                            <span class="slot-name">${p.name}</span>
+                            <span class="slot-tier" style="color:${tierInfo.color};">${p.tier}</span>
+                        </div>
+                    </div>
+                `;
+            };
+
+            blueListEl.innerHTML = POSITIONS.map(pos => createSlotHTML(pos, draftState.blueTeam[pos])).join('');
+            redListEl.innerHTML = POSITIONS.map(pos => createSlotHTML(pos, draftState.redTeam[pos])).join('');
+        }
+
+        /* 선수 개별 선택 로직 */
+        function pickDraftPlayer(lane, candidateKey) {
+            const pickedPlayer = candidateKey === 'A' ? draftState.matchData.teamA[lane] : draftState.matchData.teamB[lane];
+            const remainingPlayer = candidateKey === 'A' ? draftState.matchData.teamB[lane] : draftState.matchData.teamA[lane];
+
+            // 선택한 선수의 고유 음성 재생
+            playPlayerSound(pickedPlayer.name);
+
+            const currentTurnTeam = draftState.turnOrders[draftState.step] || 'blue';
+            const choosingTeam = currentTurnTeam === 'blue' ? draftState.blueTeam : draftState.redTeam;
+            const otherTeam = currentTurnTeam === 'blue' ? draftState.redTeam : draftState.blueTeam;
+
+            // 내가 선택한 선수는 내 팀으로, 맞라인 선수는 상대팀으로 자동 이동
+            choosingTeam[lane] = pickedPlayer;
+            otherTeam[lane] = remainingPlayer;
+
+            // 선택된 라인은 차례 목록에서 제거
+            draftState.remainingLanes = draftState.remainingLanes.filter(l => l !== lane);
+            draftState.step++;
+
+            if (draftState.remainingLanes.length === 0 || draftState.step >= 4) {
+                // 드래프트 전체 완료 - 카드들이 앞면으로 모두 뒤집혀진 상태로 표시되도록 forceFlipped = true 전달
+                closeModal('draftModal');
+                setShuffleCooldown();
+                renderMatchResultOnBoard(draftState.blueTeam, draftState.redTeam, `🎲 대표 [${draftState.repLane}] 드래프트 완료<br>🔵 블루 팀 VS 🔴 레드 팀`, true);
+            } else {
+                updateDraftUI();
+            }
         }
     </script>
 </body>
