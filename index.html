@@ -136,11 +136,11 @@
         /* 좌측 선수 참가/팀 현황 박스 */
         .status-panel {
             position: fixed;
-            top: 115px;
+            top: 150px;
             left: 15px;
             z-index: 1000;
             width: 200px;
-            max-height: calc(100vh - 140px);
+            max-height: calc(100vh - 175px);
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid #334155;
             border-radius: 12px;
@@ -883,8 +883,8 @@
     </style>
 </head>
 <body>
-    <!-- 백그라운드 BGM 요소 추가 (볼륨 설정/자동재생 지원) -->
-    <audio id="bgAudio" src="sound/background.mp3" loop></audio>
+    <!-- 배경 음악 전용 audio 태그 (loop 속성 및 초기 볼륨 설정) -->
+    <audio id="bgMusic" src="sound/background.mp3" loop></audio>
 
     <div class="footer-made-gt" onclick="handleGtClick()">Made.GT</div>
     <div class="footer-disco-gt">Discord : gangtwi</div>
@@ -905,7 +905,14 @@
 
     <div class="top-controls">
         <div class="toggle-item">
-            <span>🔊 사운드</span>
+            <span>🎵 배경음악</span>
+            <label class="switch">
+                <input type="checkbox" id="toggleBgm" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="toggle-item">
+            <span>🔊 효과음</span>
             <label class="switch">
                 <input type="checkbox" id="toggleSound" checked>
                 <span class="slider"></span>
@@ -1127,30 +1134,6 @@
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "전원 제어 와드 2개 이상 상시 구매(집갈때마다)" }
         ];
 
-        /* 백그라운드 오디오 컨트롤 로직 */
-        const bgAudio = document.getElementById('bgAudio');
-        if (bgAudio) {
-            bgAudio.volume = 0.03; // 백그라운드 사운드 크기 조절 (0.0 ~ 1.0, 0.15 = 작게 들림)
-        }
-
-        function playBgAudio() {
-            if (bgAudio && isSoundOn()) {
-                bgAudio.play().catch(err => {
-                    // 자동재생 정책에 의해 차단될 경우 첫 사용자 클릭 시 재생
-                    console.log("Autoplay blocked, waiting for user click.");
-                });
-            }
-        }
-
-        // 브라우저의 Autoplay 정책 해제를 위한 첫 클릭 핸들러
-        function handleFirstInteraction() {
-            playBgAudio();
-            window.removeEventListener('click', handleFirstInteraction);
-            window.removeEventListener('keydown', handleFirstInteraction);
-        }
-        window.addEventListener('click', handleFirstInteraction);
-        window.addEventListener('keydown', handleFirstInteraction);
-
         /* 랜덤 규칙 뽑기 기능 */
         function drawRandomRule() {
             playPlaceSound();
@@ -1212,6 +1195,7 @@
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
+        function isBgmOn() { return document.getElementById('toggleBgm').checked; }
         function isSoundOn() { return document.getElementById('toggleSound').checked; }
         function isMotionOn() { return document.getElementById('toggleMotion').checked; }
 
@@ -1242,8 +1226,10 @@
             }
         }
 
+        /* 파일 사운드 볼륨을 0.3(30%)으로 낮춤 */
         function playCustomMp3(filePath) {
             const audio = new Audio(filePath);
+            audio.volume = 0.3;
             audio.play().catch(err => {
                 console.warn('오디오 재생 실패:', err);
             });
@@ -1275,6 +1261,7 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
+        /* 팝 소리 볼륨 낮춤 (Gain: 0.15 -> 0.05) */
         function playPopSound(isOn) {
             initAudio();
             const now = audioCtx.currentTime;
@@ -1288,7 +1275,7 @@
             osc.frequency.setValueAtTime(startFreq, now);
             osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.05);
 
-            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.setValueAtTime(0.05, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
             osc.connect(gain);
@@ -1298,20 +1285,45 @@
             osc.stop(now + 0.06);
         }
 
+        /* 배경 음악 볼륨 0.15(15%)로 설정하여 은은하게 재생 */
+        function playBgm() {
+            const bgMusic = document.getElementById('bgMusic');
+            if (bgMusic) {
+                bgMusic.volume = 0.03;
+                if (isBgmOn()) {
+                    bgMusic.play().catch(err => {
+                        console.log('브라우저 정책에 의해 자동 재생이 일시 차단됨 (클릭 시 재생)', err);
+                    });
+                }
+            }
+        }
+
+        function stopBgm() {
+            const bgMusic = document.getElementById('bgMusic');
+            if (bgMusic) {
+                bgMusic.pause();
+            }
+        }
+
         function setupToggleEvents() {
+            const bgmToggle = document.getElementById('toggleBgm');
             const soundToggle = document.getElementById('toggleSound');
             const motionToggle = document.getElementById('toggleMotion');
+
+            if (bgmToggle) {
+                bgmToggle.addEventListener('change', (e) => {
+                    playPopSound(e.target.checked);
+                    if (e.target.checked) {
+                        playBgm();
+                    } else {
+                        stopBgm();
+                    }
+                });
+            }
 
             if (soundToggle) {
                 soundToggle.addEventListener('change', (e) => {
                     playPopSound(e.target.checked);
-
-                    /* 배경 사운드 토글 연동 */
-                    if (e.target.checked) {
-                        playBgAudio();
-                    } else if (bgAudio) {
-                        bgAudio.pause();
-                    }
 
                     soundToggleCount++;
                     if (soundToggleCount === 1) {
@@ -1335,6 +1347,7 @@
             }
         }
 
+        /* 카드 뒤집기 소리 볼륨 낮춤 (Gain: 0.3 -> 0.08) */
         function playFlipSound() {
             if (!isSoundOn()) return;
             initAudio();
@@ -1357,7 +1370,7 @@
             filter.frequency.exponentialRampToValueAtTime(80, now + 0.08);
 
             const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.setValueAtTime(0.08, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
             noise.connect(filter);
@@ -1368,6 +1381,7 @@
             noise.stop(now + 0.09);
         }
 
+        /* 카드 배치음 볼륨 낮춤 (Gain: 0.25 -> 0.08) */
         function playPlaceSound() {
             if (!isSoundOn()) return;
             initAudio();
@@ -1380,7 +1394,7 @@
             osc.frequency.setValueAtTime(120, now);
             osc.frequency.exponentialRampToValueAtTime(30, now + 0.05);
 
-            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.setValueAtTime(0.08, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
             osc.connect(gain);
@@ -1438,6 +1452,14 @@
             renderStatusPanel();
             setupPasteAndDrop();
             setupToggleEvents();
+
+            // 배경음악 요소 볼륨 초기 설정 및 사용자 클릭 시 재생
+            const bgMusic = document.getElementById('bgMusic');
+            if (bgMusic) bgMusic.volume = 0.15;
+
+            window.addEventListener('click', () => {
+                playBgm();
+            }, { once: true });
         };
 
         // 프로필 클릭 시 활성화/비활성화 토글 함수
