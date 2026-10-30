@@ -283,8 +283,19 @@
         /* 전체 카드 확인 리스트 */
         .card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-top: 15px; }
         .card-simple { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .card-simple img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #334155; margin-bottom: 6px; }
+        .card-simple img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #334155; margin-bottom: 6px; cursor: pointer; transition: transform 0.2s, filter 0.2s; }
+        .card-simple img:hover { transform: scale(1.08); }
         
+        /* 비활성화된 카드 스타일 추가 */
+        .card-simple.disabled {
+            opacity: 0.4;
+            filter: grayscale(80%);
+            border-style: dashed;
+        }
+        .card-simple.disabled img {
+            filter: grayscale(100%);
+        }
+
         /* 카드 내 삭제 버튼 및 수정 버튼 스타일 */
         .card-delete { position: absolute; top: 8px; right: 8px; background: rgba(239,68,68,0.2); color: #ef4444; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.8em; display: flex; align-items: center; justify-content: center; }
         .card-edit { position: absolute; top: 34px; right: 8px; background: rgba(59,130,246,0.2); color: #3b82f6; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.75em; display: flex; align-items: center; justify-content: center; }
@@ -872,6 +883,9 @@
     </style>
 </head>
 <body>
+    <!-- 백그라운드 BGM 요소 추가 (볼륨 설정/자동재생 지원) -->
+    <audio id="bgAudio" src="sound/background.mp3" loop></audio>
+
     <div class="footer-made-gt" onclick="handleGtClick()">Made.GT</div>
     <div class="footer-disco-gt">Discord : gangtwi</div>
 
@@ -1113,6 +1127,30 @@
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "전원 제어 와드 2개 이상 상시 구매(집갈때마다)" }
         ];
 
+        /* 백그라운드 오디오 컨트롤 로직 */
+        const bgAudio = document.getElementById('bgAudio');
+        if (bgAudio) {
+            bgAudio.volume = 0.03; // 백그라운드 사운드 크기 조절 (0.0 ~ 1.0, 0.15 = 작게 들림)
+        }
+
+        function playBgAudio() {
+            if (bgAudio && isSoundOn()) {
+                bgAudio.play().catch(err => {
+                    // 자동재생 정책에 의해 차단될 경우 첫 사용자 클릭 시 재생
+                    console.log("Autoplay blocked, waiting for user click.");
+                });
+            }
+        }
+
+        // 브라우저의 Autoplay 정책 해제를 위한 첫 클릭 핸들러
+        function handleFirstInteraction() {
+            playBgAudio();
+            window.removeEventListener('click', handleFirstInteraction);
+            window.removeEventListener('keydown', handleFirstInteraction);
+        }
+        window.addEventListener('click', handleFirstInteraction);
+        window.addEventListener('keydown', handleFirstInteraction);
+
         /* 랜덤 규칙 뽑기 기능 */
         function drawRandomRule() {
             playPlaceSound();
@@ -1127,7 +1165,7 @@
             contentEl.innerText = `"${selected.rule}"`;
 
             boxEl.classList.remove('show');
-            void boxEl.offsetWidth; // Trigger reflow for re-animation
+            void boxEl.offsetWidth;
             boxEl.classList.add('show');
         }
 
@@ -1180,7 +1218,6 @@
         let soundToggleCount = 0;
         let soundToggleTimer = null;
 
-        /* Made.GT 연타 제어 변수 */
         let gtClickCount = 0;
         let gtClickTimer = null;
 
@@ -1212,7 +1249,6 @@
             });
         }
 
-        /* 선수별 전용 고유 사운드 재생 함수 */
         function playPlayerSound(playerName) {
             if (!isSoundOn()) return;
 
@@ -1221,7 +1257,7 @@
             else if (playerName === '임서진') playCustomMp3('sound/4.mp3');
             else if (playerName === '정세훈') playCustomMp3('sound/5.mp3');
             else if (playerName === '김태후') {
-                const rand = Math.floor(Math.random() * 11); // 0 ~ 10
+                const rand = Math.floor(Math.random() * 11);
                 playCustomMp3(`sound/t_${rand}.m4a`);
             }
             else if (playerName === '김태윤') playCustomMp3('sound/6.m4a');
@@ -1269,6 +1305,13 @@
             if (soundToggle) {
                 soundToggle.addEventListener('change', (e) => {
                     playPopSound(e.target.checked);
+
+                    /* 배경 사운드 토글 연동 */
+                    if (e.target.checked) {
+                        playBgAudio();
+                    } else if (bgAudio) {
+                        bgAudio.pause();
+                    }
 
                     soundToggleCount++;
                     if (soundToggleCount === 1) {
@@ -1362,25 +1405,25 @@
         };
 
         const playerPool = [
-            { id: 1, name: '장유성', tier: '플래티넘', lanes: ['정글','서폿'], avatarUrl: getAvatarForName('장유성') },
-            { id: 2, name: '정세훈', tier: '플래티넘', lanes: ['미드','원딜'], avatarUrl: getAvatarForName('정세훈') },
-            { id: 3, name: '김민규', tier: '마스터', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김민규') },
-            { id: 4, name: '김태후', tier: '플래티넘', lanes: ['탑','미드'], avatarUrl: getAvatarForName('김태후') },
-            { id: 5, name: '김채훈', tier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈') },
-            { id: 6, name: '김태윤', tier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤') },
-            { id: 7, name: '손재민', tier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민') },
-            { id: 8, name: '유준서', tier: '골드', lanes: ['탑','정글','미드','서폿'], avatarUrl: getAvatarForName('유준서') },
-            { id: 9, name: '김주환', tier: '플래티넘', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김주환') },
-            { id: 10, name: '한승기', tier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('한승기') },
-            { id: 11, name: '권도윤', tier: '실버', lanes: ['탑','서폿'], avatarUrl: getAvatarForName('권도윤') },
-            { id: 12, name: '오치형', tier: '에메랄드', lanes: ['정글','미드'], avatarUrl: getAvatarForName('오치형') },
-            { id: 13, name: '임서진', tier: '에메랄드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('임서진') },
-            { id: 14, name: '곽현수', tier: '플래티넘', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('곽현수') },
-            { id: 15, name: '강희성', tier: '골드', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('강희성') },
-            { id: 16, name: '이선재', tier: '플래티넘', lanes: ['탑'], avatarUrl: getAvatarForName('이선재') },
-            { id: 17, name: '최원혁', tier: '실버', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁') },
-            { id: 18, name: '박재현', tier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현') },
-            { id: 19, name: '김혜준', tier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준') }
+            { id: 1, name: '장유성', tier: '플래티넘', lanes: ['정글','서폿'], avatarUrl: getAvatarForName('장유성'), active: true },
+            { id: 2, name: '정세훈', tier: '플래티넘', lanes: ['미드','원딜'], avatarUrl: getAvatarForName('정세훈'), active: true },
+            { id: 3, name: '김민규', tier: '마스터', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김민규'), active: true },
+            { id: 4, name: '김태후', tier: '플래티넘', lanes: ['탑','미드'], avatarUrl: getAvatarForName('김태후'), active: true },
+            { id: 5, name: '김채훈', tier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈'), active: true },
+            { id: 6, name: '김태윤', tier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤'), active: true },
+            { id: 7, name: '손재민', tier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민'), active: true },
+            { id: 8, name: '유준서', tier: '골드', lanes: ['탑','정글','미드','서폿'], avatarUrl: getAvatarForName('유준서'), active: true },
+            { id: 9, name: '김주환', tier: '플래티넘', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김주환'), active: true },
+            { id: 10, name: '한승기', tier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('한승기'), active: true },
+            { id: 11, name: '권도윤', tier: '실버', lanes: ['탑','서폿'], avatarUrl: getAvatarForName('권도윤'), active: true },
+            { id: 12, name: '오치형', tier: '에메랄드', lanes: ['정글','미드'], avatarUrl: getAvatarForName('오치형'), active: true },
+            { id: 13, name: '임서진', tier: '에메랄드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('임서진'), active: true },
+            { id: 14, name: '곽현수', tier: '플래티넘', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('곽현수'), active: true },
+            { id: 15, name: '강희성', tier: '골드', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('강희성'), active: true },
+            { id: 16, name: '이선재', tier: '플래티넘', lanes: ['탑'], avatarUrl: getAvatarForName('이선재'), active: true },
+            { id: 17, name: '최원혁', tier: '실버', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁'), active: true },
+            { id: 18, name: '박재현', tier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현'), active: true },
+            { id: 19, name: '김혜준', tier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준'), active: true }
         ];
 
         const selectedLanes = new Set();
@@ -1388,7 +1431,7 @@
         let editingSelectedLanes = new Set();
         let isAnimating = false;
         let currentMatchedPlayers = {};
-        let isShuffleCooldown = false; // 2초 쿨타임 제어 변수
+        let isShuffleCooldown = false;
 
         window.onload = () => { 
             renderCards(); 
@@ -1396,6 +1439,16 @@
             setupPasteAndDrop();
             setupToggleEvents();
         };
+
+        // 프로필 클릭 시 활성화/비활성화 토글 함수
+        function togglePlayerActive(id) {
+            const player = playerPool.find(p => p.id === id);
+            if (player) {
+                player.active = player.active === undefined ? false : !player.active;
+                renderCards();
+                renderStatusPanel();
+            }
+        }
 
         function setupPasteAndDrop() {
             const dropZone = document.getElementById('dropZone');
@@ -1495,7 +1548,8 @@
                 name: name,
                 tier: tier,
                 lanes: Array.from(selectedLanes),
-                avatarUrl: finalAvatar
+                avatarUrl: finalAvatar,
+                active: true
             });
 
             renderCards();
@@ -1512,7 +1566,6 @@
             }
         }
 
-        /* 선수 라인 수정 로직 */
         function openEditLaneModal(id) {
             const player = playerPool.find(p => p.id === id);
             if (!player) return;
@@ -1569,20 +1622,26 @@
                 return;
             }
 
+            // 활성화 상태(active)가 false인 카드가 아래쪽으로 오도록 정렬 순서 수정
             const sortedPlayerPool = [...playerPool].sort((a, b) => {
+                const activeA = a.active !== false ? 1 : 0;
+                const activeB = b.active !== false ? 1 : 0;
+                if (activeA !== activeB) return activeB - activeA; // 활성화(1)가 위로, 비활성화(0)가 아래로
+
                 const scoreA = TIER_COLORS[a.tier]?.score || 0;
                 const scoreB = TIER_COLORS[b.tier]?.score || 0;
-                if (scoreB !== scoreA) return scoreB - scoreA; // 티어 내림차순
-                return a.name.localeCompare(b.name, 'ko');      // 같은 티어면 이름순
+                if (scoreB !== scoreA) return scoreB - scoreA;
+                return a.name.localeCompare(b.name, 'ko');
             });
 
             modalListEl.innerHTML = sortedPlayerPool.map(p => {
                 const tierInfo = TIER_COLORS[p.tier] || TIER_COLORS['언랭'];
+                const isDisabled = p.active === false;
                 return `
-                    <div class="card-simple">
+                    <div class="card-simple ${isDisabled ? 'disabled' : ''}">
                         <button class="card-delete" onclick="deleteCard(${p.id})" title="삭제">✕</button>
                         <button class="card-edit" onclick="openEditLaneModal(${p.id})" title="라인 수정">✏️</button>
-                        <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}">
+                        <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}" onclick="togglePlayerActive(${p.id})" title="클릭하여 참전/비참전 토글">
                         <strong style="color:#fff;">${p.name}</strong>
                         <span class="p-tier-badge" style="color:${tierInfo.color};">${p.tier}</span>
                         <span style="font-size:0.75em; color:#94a3b8;">${p.lanes.join(', ')}</span>
@@ -1591,7 +1650,6 @@
             }).join('');
         }
 
-        // 선수 출전 현황 패널 접기/펼치기
         function toggleStatusPanel() {
             const panel = document.getElementById('statusPanel');
             panel.classList.toggle('collapsed');
@@ -1752,7 +1810,6 @@
 
             overlay.classList.add('active');
 
-            // 클릭 시 해당 선수 고유 사운드 재생
             playPlayerSound(playerName);
 
             setTimeout(() => {
@@ -1801,7 +1858,6 @@
             return card;
         }
 
-        /* 2초 쿨타임 처리 함수 */
         function setShuffleCooldown() {
             isShuffleCooldown = true;
             const btnTeam = document.querySelector('.btn-team');
@@ -1847,14 +1903,15 @@
         function generate5v5Team(balanceMode = false) {
             if (isShuffleCooldown) return;
 
-            if (playerPool.length < 10) {
-                alert(`5vs5 내전을 진행하려면 최소 10명의 카드가 필요합니다. (현재: ${playerPool.length}명)`);
+            const activePool = playerPool.filter(p => p.active !== false);
+
+            if (activePool.length < 10) {
+                alert(`5vs5 내전을 진행하려면 최소 10명의 활성화된 카드가 필요합니다. (현재 참전: ${activePool.length}명)`);
                 return;
             }
 
             setShuffleCooldown();
 
-            // 기존 매치 보드 및 카드 위치 초기화
             POSITIONS.forEach(pos => {
                 const blueEl = document.getElementById(`blue-${pos}`);
                 const redEl = document.getElementById(`red-${pos}`);
@@ -1862,7 +1919,7 @@
                 if (redEl) redEl.innerHTML = '';
             });
 
-            const matchResult = assign10Players(playerPool, balanceMode);
+            const matchResult = assign10Players(activePool, balanceMode);
             if (!matchResult) {
                 if (balanceMode) {
                     alert('선수들의 희망 라인 및 티어 조건에 맞는 밸런스 조합을 찾을 수 없습니다.\n라인 범용성을 늘려주세요.');
@@ -1968,7 +2025,6 @@
             });
         }
 
-        // 라인 초기화 함수
         function resetLaneTitle(titleEl, pos) {
             titleEl.innerHTML = pos;
             titleEl.classList.remove('lane-warning');
@@ -1977,7 +2033,6 @@
             titleEl.style.color = '#fbbf24';
         }
 
-        // 티어 비교 및 경고 표시 함수
         function checkLaneMatchups() {
             POSITIONS.forEach(pos => {
                 const blueContainer = document.getElementById(`blue-${pos}`);
@@ -1989,7 +2044,6 @@
                 const blueCard = blueContainer.querySelector('.flip-card');
                 const redCard = redContainer.querySelector('.flip-card');
                 
-                // 양쪽 카드가 모두 뒤집힌 상태(flipped)인지 확인
                 if (blueCard && redCard && blueCard.classList.contains('flipped') && redCard.classList.contains('flipped')) {
                     const blueTierTxt = blueCard.querySelector('.p-tier').innerText;
                     const redTierTxt = redCard.querySelector('.p-tier').innerText;
@@ -1999,7 +2053,6 @@
                     
                     const diff = Math.abs(blueScore - redScore);
                     
-                    // 3단계 이상 차이 시 경고 발생
                     if (diff >= 3) {
                         titleEl.innerHTML = `${pos}`;
                         titleEl.classList.add('lane-warning');
@@ -2018,9 +2071,6 @@
             });
         }
 
-        /* ----------------------------------------------------
-           🎲 라인 대표 드래프트 시스템 (4회 무작위 턴 & 연속 3번 동일팀 방지)
-        ---------------------------------------------------- */
         let draftState = {
             step: 0,
             repLane: '',
@@ -2028,7 +2078,7 @@
             blueTeam: {},
             redTeam: {},
             matchData: null,
-            turnOrders: [] // 총 4단계 무작위 턴 순서 배열 ('blue' 또는 'red')
+            turnOrders: []
         };
 
         const LANE_ICONS = {
@@ -2039,7 +2089,6 @@
             '서폿': '🌿'
         };
 
-        // 동일 팀 연속 3회 지명 방지 무작위 턴 배열 생성 함수
         function generateRandomTurnOrders() {
             const teams = ['blue', 'red'];
             let orders = [];
@@ -2051,7 +2100,6 @@
                     orders.push(teams[Math.floor(Math.random() * 2)]);
                 }
 
-                // 3연속 동일 팀('blue','blue','blue' 또는 'red','red','red') 검사
                 let isThreeInARow = false;
                 if (orders[0] === orders[1] && orders[1] === orders[2]) isThreeInARow = true;
                 if (orders[1] === orders[2] && orders[2] === orders[3]) isThreeInARow = true;
@@ -2065,14 +2113,16 @@
 
         function startDraftMode() {
             if (isShuffleCooldown) return;
-            if (playerPool.length < 10) {
-                alert(`5vs5 내전을 진행하려면 최소 10명의 카드가 필요합니다. (현재: ${playerPool.length}명)`);
+            const activePool = playerPool.filter(p => p.active !== false);
+
+            if (activePool.length < 10) {
+                alert(`5vs5 내전을 진행하려면 최소 10명의 활성화된 카드가 필요합니다. (현재 참전: ${activePool.length}명)`);
                 return;
             }
 
-            const matchResult = assign10Players(playerPool, false);
+            const matchResult = assign10Players(activePool, false);
             if (!matchResult) {
-                alert('등록된 선수들의 희망 라인 조합으로 5대5 팀을 만들 수 없습니다.');
+                alert('선택된 선수들의 희망 라인 조합으로 5대5 팀을 만들 수 없습니다.');
                 return;
             }
 
@@ -2081,18 +2131,14 @@
             draftState.redTeam = {};
             draftState.step = 0;
 
-            // 동일 팀 3연속 선택 차단 기능이 포함된 무작위 턴 순서 생성
             draftState.turnOrders = generateRandomTurnOrders();
 
-            // 1. 대표 라인 추첨 (탑/정글/미드/원딜/서폿 중 랜덤 1개)
             const randomLaneIdx = Math.floor(Math.random() * POSITIONS.length);
             draftState.repLane = POSITIONS[randomLaneIdx];
 
-            // 2. 대표 라인의 2개 카드는 캡틴으로 확정 (블루/레드 팀 지정)
             draftState.blueTeam[draftState.repLane] = matchResult.teamA[draftState.repLane];
             draftState.redTeam[draftState.repLane] = matchResult.teamB[draftState.repLane];
 
-            // 3. 대표 라인을 제외한 남은 4개 라인 생성
             draftState.remainingLanes = POSITIONS.filter(l => l !== draftState.repLane);
 
             openModal('draftModal');
@@ -2114,7 +2160,6 @@
             const blueTierInfo = TIER_COLORS[blueRepPlayer?.tier] || TIER_COLORS['언랭'];
             const redTierInfo = TIER_COLORS[redRepPlayer?.tier] || TIER_COLORS['언랭'];
 
-            // 상단 대형 대표 카드 정보 및 티어 고유 색상 설정
             document.getElementById('repLaneNameBlue').innerText = draftState.repLane;
             document.getElementById('repLaneNameRed').innerText = draftState.repLane;
             
@@ -2138,17 +2183,14 @@
             redImgEl.src = redRepPlayer?.avatarUrl || defaultAvatar;
             redImgEl.style.borderColor = redTierInfo.color;
 
-            // 턴에 따라 대표 카드에 활성화 네온 가시성 부여
             const blueCaptainCard = document.getElementById('blueCaptainCard');
             const redCaptainCard = document.getElementById('redCaptainCard');
 
             blueCaptainCard.classList.remove('active-turn-glow');
             redCaptainCard.classList.remove('active-turn-glow');
 
-            // 차례 변경 시 알림 소리 재생
             playPlaceSound();
 
-            // 현재 턴의 팀 구하기
             const currentTurnTeam = draftState.turnOrders[draftState.step] || 'blue';
             const currentRepName = currentTurnTeam === 'blue' ? blueRepName : redRepName;
 
@@ -2164,7 +2206,6 @@
                 redCaptainCard.classList.add('active-turn-glow');
             }
 
-            // 남아있는 라인 후보 카드가 가로로 펼쳐지도록 렌더링
             laneContainerEl.innerHTML = draftState.remainingLanes.map(lane => {
                 const candA = draftState.matchData.teamA[lane];
                 const candB = draftState.matchData.teamB[lane];
@@ -2198,7 +2239,6 @@
             renderDraftTeamLists();
         }
 
-        /* 프로필 카드 형태로 좌/우 측면 팀원 지명 목록 렌더링 */
         function renderDraftTeamLists() {
             const blueListEl = document.getElementById('draftBlueList');
             const redListEl = document.getElementById('draftRedList');
@@ -2231,28 +2271,23 @@
             redListEl.innerHTML = POSITIONS.map(pos => createSlotHTML(pos, draftState.redTeam[pos])).join('');
         }
 
-        /* 선수 개별 선택 로직 */
         function pickDraftPlayer(lane, candidateKey) {
             const pickedPlayer = candidateKey === 'A' ? draftState.matchData.teamA[lane] : draftState.matchData.teamB[lane];
             const remainingPlayer = candidateKey === 'A' ? draftState.matchData.teamB[lane] : draftState.matchData.teamA[lane];
 
-            // 선택한 선수의 고유 음성 재생
             playPlayerSound(pickedPlayer.name);
 
             const currentTurnTeam = draftState.turnOrders[draftState.step] || 'blue';
             const choosingTeam = currentTurnTeam === 'blue' ? draftState.blueTeam : draftState.redTeam;
             const otherTeam = currentTurnTeam === 'blue' ? draftState.redTeam : draftState.blueTeam;
 
-            // 내가 선택한 선수는 내 팀으로, 맞라인 선수는 상대팀으로 자동 이동
             choosingTeam[lane] = pickedPlayer;
             otherTeam[lane] = remainingPlayer;
 
-            // 선택된 라인은 차례 목록에서 제거
             draftState.remainingLanes = draftState.remainingLanes.filter(l => l !== lane);
             draftState.step++;
 
             if (draftState.remainingLanes.length === 0 || draftState.step >= 4) {
-                // 드래프트 전체 완료 - 카드들이 앞면으로 모두 뒤집혀진 상태로 표시되도록 forceFlipped = true 전달
                 closeModal('draftModal');
                 setShuffleCooldown();
                 renderMatchResultOnBoard(draftState.blueTeam, draftState.redTeam, `🎲 대표 [${draftState.repLane}] 드래프트 완료<br>🔵 블루 팀 VS 🔴 레드 팀`, true);
