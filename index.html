@@ -1289,7 +1289,7 @@
         function playBgm() {
             const bgMusic = document.getElementById('bgMusic');
             if (bgMusic) {
-                bgMusic.volume = 0.03;
+                bgMusic.volume = 0.01;
                 if (isBgmOn()) {
                     bgMusic.play().catch(err => {
                         console.log('브라우저 정책에 의해 자동 재생이 일시 차단됨 (클릭 시 재생)', err);
