@@ -981,6 +981,40 @@
             font-size: 0.75em;
             font-weight: bold;
         }
+        /* ----------------------------------------------------
+           📍 라인별 전적 전용 스타일
+        ---------------------------------------------------- */
+        .lane-filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .lane-filter-tab {
+            padding: 6px 12px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: #94a3b8;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .lane-filter-tab:hover { border-color: #60a5fa; color: #cbd5e1; }
+        .lane-filter-tab.active { background: #3b82f6; border-color: #60a5fa; color: #fff; }
+
+        .lane-stats-table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 0.85em; }
+        .lane-stats-table th { color: #94a3b8; font-weight: normal; padding: 6px 4px; border-bottom: 1px solid #334155; text-align: center; }
+        .lane-stats-table td { padding: 8px 4px; text-align: center; color: #cbd5e1; border-bottom: 1px solid #1e293b; }
+        .lane-stats-table td.lane-name-cell { color: #fbbf24; font-weight: bold; }
+        .lane-stats-table td.lane-empty { color: #475569; }
+        .lane-stats-table .kda-sub { display: block; font-size: 0.8em; color: #94a3b8; }
+        .history-lane-tag {
+            display: inline-block;
+            font-size: 0.78em;
+            font-weight: bold;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.12);
+            border-radius: 10px;
+            padding: 1px 8px;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1097,7 +1131,17 @@
             
             <div class="form-group">
                 <label for="recordPlayerSelect">선수 선택:</label>
-                <select id="recordPlayerSelect"></select>
+                <select id="recordPlayerSelect" onchange="syncRecordLane()"></select>
+            </div>
+            <div class="form-group">
+                <label for="recordLane">플레이한 라인:</label>
+                <select id="recordLane">
+                    <option value="탑">탑</option>
+                    <option value="정글">정글</option>
+                    <option value="미드">미드</option>
+                    <option value="원딜">원딜</option>
+                    <option value="서폿">서폿</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="recordMatchResult">경기 결과:</label>
@@ -1208,7 +1252,16 @@
                 </div>
             </div>
 
+            <h3 style="font-size: 1em; margin-bottom: 10px; color: #cbd5e1;">📍 라인별 전적</h3>
+            <table class="lane-stats-table">
+                <thead>
+                    <tr><th>라인</th><th>전적</th><th>승률</th><th>KDA</th></tr>
+                </thead>
+                <tbody id="laneStatsBody"></tbody>
+            </table>
+
             <h3 style="font-size: 1em; margin-bottom: 10px; color: #cbd5e1;">최근 전적 기록</h3>
+            <div class="lane-filter-tabs" id="laneFilterTabs"></div>
             <div class="match-history-list" id="matchHistoryList">
                 <p style="color: #64748b; text-align: center;">기록된 전적이 없습니다.</p>
             </div>
@@ -1635,8 +1688,14 @@
         }
 
         /* 선수 승률 및 KDA 계산 헬퍼 함수 */
-        function getPlayerStatsSummary(playerName) {
-            const records = playerMatchRecords[playerName] || [];
+        function filterRecordsByLane(records, lane) {
+            if (!lane || lane === 'all') return records;
+            if (lane === '미지정') return records.filter(r => !r.lane);
+            return records.filter(r => r.lane === lane);
+        }
+
+        function getPlayerStatsSummary(playerName, lane = null) {
+            const records = filterRecordsByLane(playerMatchRecords[playerName] || [], lane);
             const total = records.length;
             if (total === 0) {
                 return { total: 0, wins: 0, losses: 0, winRate: '0.0', kdaRatio: '0.00', avgK: '0.0', avgD: '0.0', avgA: '0.0' };
@@ -1700,12 +1759,21 @@
             const selectEl = document.getElementById('recordPlayerSelect');
             selectEl.innerHTML = playerPool.map(p => `<option value="${p.name}" ${p.name === defaultPlayer ? 'selected' : ''}>${p.name} (${p.tier})</option>`).join('');
             
+            syncRecordLane();
             document.getElementById('recordChampion').value = '';
             document.getElementById('recordK').value = '0';
             document.getElementById('recordD').value = '0';
             document.getElementById('recordA').value = '0';
             
             openModal('recordModal');
+        }
+
+        /* 선수를 바꾸면 그 선수의 첫 번째 가능 라인을 기본값으로 */
+        function syncRecordLane() {
+            const name = document.getElementById('recordPlayerSelect').value;
+            const p = playerPool.find(x => x.name === name);
+            const laneSel = document.getElementById('recordLane');
+            if (p && p.lanes && p.lanes.length > 0 && laneSel) laneSel.value = p.lanes[0];
         }
 
         /* 전적 기록 저장 (Firebase 느낌의 비동기 피드백) */
@@ -1716,11 +1784,13 @@
             const k = parseInt(document.getElementById('recordK').value) || 0;
             const d = parseInt(document.getElementById('recordD').value) || 0;
             const a = parseInt(document.getElementById('recordA').value) || 0;
+            const lane = document.getElementById('recordLane').value;
 
             if (!playerName) return alert('선수를 선택해 주세요.');
 
             const newRecord = {
                 result: result,
+                lane: lane,
                 champion: champion,
                 kda: `${k}/${d}/${a}`,
                 date: '방금 전'
@@ -1935,18 +2005,64 @@
             closeModal('editLaneModal');
         }
 
-        /* 선수의 상세 전적 모달 오픈 */
-        function openPlayerStatsModal(playerName) {
-            document.getElementById('statsPlayerTitle').innerText = `📊 ${playerName} 선수 전적 정보`;
-            const records = playerMatchRecords[playerName] || [];
+        /* 선수의 상세 전적 모달 오픈 (라인별 보기 지원) */
+        let statsViewPlayer = '';
+        let statsViewLane = 'all';
 
-            const stats = getPlayerStatsSummary(playerName);
+        function openPlayerStatsModal(playerName) {
+            statsViewPlayer = playerName;
+            statsViewLane = 'all';
+            renderPlayerStats();
+            openModal('playerStatsModal');
+        }
+
+        function setStatsLaneFilter(lane) {
+            statsViewLane = lane;
+            renderPlayerStats();
+        }
+
+        function renderPlayerStats() {
+            const playerName = statsViewPlayer;
+            const lane = statsViewLane;
+            const allRecords = playerMatchRecords[playerName] || [];
+            const records = filterRecordsByLane(allRecords, lane);
+            const hasUnassigned = allRecords.some(r => !r.lane);
+            const laneKeys = hasUnassigned ? [...POSITIONS, '미지정'] : [...POSITIONS];
+
+            document.getElementById('statsPlayerTitle').innerText = `📊 ${playerName} 선수 전적 정보`;
+
+            /* 라인별 전적 표 */
+            document.getElementById('laneStatsBody').innerHTML = laneKeys.map(key => {
+                const st = getPlayerStatsSummary(playerName, key);
+                if (st.total === 0) {
+                    return `<tr><td class="lane-name-cell">${key}</td><td class="lane-empty" colspan="3">기록 없음</td></tr>`;
+                }
+                return `
+                    <tr>
+                        <td class="lane-name-cell">${key}</td>
+                        <td>${st.total}전 ${st.wins}승 ${st.losses}패</td>
+                        <td>${st.winRate}%</td>
+                        <td>${st.kdaRatio}<span class="kda-sub">${st.avgK}/${st.avgD}/${st.avgA}</span></td>
+                    </tr>`;
+            }).join('');
+
+            /* 라인 필터 탭 */
+            const tabKeys = ['all', ...laneKeys];
+            document.getElementById('laneFilterTabs').innerHTML = tabKeys.map(key => {
+                const cnt = key === 'all' ? allRecords.length : filterRecordsByLane(allRecords, key).length;
+                const label = key === 'all' ? '전체' : key;
+                return `<button type="button" class="lane-filter-tab ${key === lane ? 'active' : ''}" onclick="setStatsLaneFilter('${key}')">${label} (${cnt})</button>`;
+            }).join('');
+
+            /* 상단 요약 박스 (선택한 라인 기준) */
+            const stats = getPlayerStatsSummary(playerName, lane);
+            const historyListEl = document.getElementById('matchHistoryList');
+
             if (stats.total === 0) {
                 document.getElementById('statTotalGames').innerText = `0전 0승 0패`;
                 document.getElementById('statWinRate').innerText = `0%`;
                 document.getElementById('statAvgKda').innerText = `0.00`;
-                document.getElementById('matchHistoryList').innerHTML = `<p style="color: #64748b; text-align: center;">기록된 전적이 없습니다.</p>`;
-                openModal('playerStatsModal');
+                historyListEl.innerHTML = `<p style="color: #64748b; text-align: center;">${lane === 'all' ? '기록된 전적이 없습니다.' : '해당 라인의 전적이 없습니다.'}</p>`;
                 return;
             }
 
@@ -1954,13 +2070,13 @@
             document.getElementById('statWinRate').innerText = `${stats.winRate}%`;
             document.getElementById('statAvgKda').innerText = `${stats.avgK}/${stats.avgD}/${stats.avgA} (${stats.kdaRatio})`;
 
-            const historyListEl = document.getElementById('matchHistoryList');
             historyListEl.innerHTML = records.map(rec => {
                 const isWin = rec.result === 'win';
+                const laneTag = rec.lane ? `<span class="history-lane-tag">${rec.lane}</span>` : '';
                 return `
                     <div class="match-history-item ${isWin ? 'win' : 'loss'}">
                         <div>
-                            <strong>${isWin ? '승리' : '패배'}</strong> · <span style="color:#fff;">${rec.champion}</span>
+                            <strong>${isWin ? '승리' : '패배'}</strong> · ${laneTag}<span style="color:#fff;">${rec.champion}</span>
                         </div>
                         <div>
                             <span>KDA: ${rec.kda}</span> &nbsp;|&nbsp; <span style="font-size: 0.8em; opacity: 0.8;">${rec.date}</span>
@@ -1968,8 +2084,6 @@
                     </div>
                 `;
             }).join('');
-
-            openModal('playerStatsModal');
         }
 
         /* 카드 목록 렌더링 - 각 카드 밑 승률 & KDA 뱃지 추가 */
