@@ -1033,6 +1033,32 @@
         /* 5vs5 카드 뒷면 KDA */
         .flip-card-back .p-kda { font-size: 0.68em; color: #94a3b8; font-weight: normal; margin-top: 3px; }
         .zoom-card-container .p-kda { font-size: 0.9em; margin-top: 6px; }
+
+        /* ----------------------------------------------------
+           📝 10명 전적 한 번에 입력 모달
+        ---------------------------------------------------- */
+        .record-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+        .record-team { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px; }
+        .record-team.blue { border-color: rgba(59, 130, 246, 0.5); }
+        .record-team.red { border-color: rgba(239, 68, 68, 0.5); }
+        .record-team h3 { margin: 0 0 10px 0; font-size: 1em; text-align: center; }
+        .record-team.blue h3 { color: #60a5fa; }
+        .record-team.red h3 { color: #f87171; }
+        .rec-head, .rec-row { display: grid; grid-template-columns: 34px minmax(0, 1.2fr) minmax(0, 1fr) 46px 46px 46px; gap: 6px; align-items: center; }
+        .rec-head { font-size: 0.75em; color: #94a3b8; text-align: center; margin-bottom: 6px; }
+        .rec-row { margin-bottom: 8px; }
+        .rec-lane { color: #fbbf24; font-weight: bold; font-size: 0.85em; text-align: center; }
+        .rec-row select, .rec-row input { padding: 8px 6px; font-size: 0.88em; min-width: 0; }
+        .rec-row input[type="number"] { text-align: center; padding: 8px 2px; -moz-appearance: textfield; }
+        .rec-row input[type="number"]::-webkit-outer-spin-button,
+        .rec-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        @media (max-width: 900px) { .record-teams { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) {
+            .rec-head { display: none; }
+            .rec-row { grid-template-columns: 34px repeat(3, 1fr); }
+            .rec-row select { grid-column: 2 / 5; }
+            .rec-row input[type="text"] { grid-column: 1 / 5; }
+        }
     </style>
 </head>
 <body>
@@ -1137,56 +1163,38 @@
         </div>
     </div>
 
-    <!-- 전적 작성 모달 (Firebase 연동 컨셉) -->
+    <!-- 전적 작성 모달 (10명 한 번에 / Firebase) -->
     <div class="modal" id="recordModal" style="z-index: 1004;">
-        <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-content" style="max-width: 1100px;">
             <span class="modal-close" onclick="closeModal('recordModal')">&times;</span>
             <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px;">
                 <span style="font-size: 1.4em;">🔥</span>
-                <h2 style="margin:0; color: #10b981; font-size: 1.3em;">Firebase 전적 기록 추가</h2>
+                <h2 style="margin:0; color: #10b981; font-size: 1.3em;">Firebase 전적 기록 추가 (10명)</h2>
             </div>
-            <p style="font-size: 0.82em; color: #64748b; margin-bottom: 18px;">선수의 게임 결과를 실시간 데이터베이스에 업로드합니다.</p>
-            
-            <div class="form-group">
-                <label for="recordPlayerSelect">선수 선택:</label>
-                <select id="recordPlayerSelect" onchange="syncRecordLane()"></select>
-            </div>
-            <div class="form-group">
-                <label for="recordLane">플레이한 라인:</label>
-                <select id="recordLane">
-                    <option value="탑">탑</option>
-                    <option value="정글">정글</option>
-                    <option value="미드">미드</option>
-                    <option value="원딜">원딜</option>
-                    <option value="서폿">서폿</option>
+            <p style="font-size: 0.82em; color: #64748b; margin-bottom: 18px;">양 팀 10명의 라인·챔피언·KDA를 한 번에 입력하면 전적이 모두 함께 업로드됩니다. (5vs5 카드를 뽑아둔 상태면 자동으로 채워져요)</p>
+
+            <div class="form-group" style="max-width: 260px;">
+                <label for="recordWinTeam">승리 팀:</label>
+                <select id="recordWinTeam">
+                    <option value="blue">🔵 블루 팀 승리</option>
+                    <option value="red">🔴 레드 팀 승리</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="recordMatchResult">경기 결과:</label>
-                <select id="recordMatchResult">
-                    <option value="win">승리 (WIN)</option>
-                    <option value="loss">패배 (LOSS)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="recordChampion">사용 챔피언:</label>
-                <input type="text" id="recordChampion" placeholder="예: 아리, 비에고, 이즈리얼">
-            </div>
-            <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div>
-                    <label for="recordK">Kills (킬)</label>
-                    <input type="number" id="recordK" min="0" value="0">
+
+            <div class="record-teams">
+                <div class="record-team blue">
+                    <h3>🔵 블루 팀</h3>
+                    <div class="rec-head"><span>라인</span><span>선수</span><span>챔피언</span><span>K</span><span>D</span><span>A</span></div>
+                    <div id="record-blue-rows"></div>
                 </div>
-                <div>
-                    <label for="recordD">Deaths (데스)</label>
-                    <input type="number" id="recordD" min="0" value="0">
-                </div>
-                <div>
-                    <label for="recordA">Assists (어시)</label>
-                    <input type="number" id="recordA" min="0" value="0">
+                <div class="record-team red">
+                    <h3>🔴 레드 팀</h3>
+                    <div class="rec-head"><span>라인</span><span>선수</span><span>챔피언</span><span>K</span><span>D</span><span>A</span></div>
+                    <div id="record-red-rows"></div>
                 </div>
             </div>
-            <button class="action-btn btn-record" style="width:100%; justify-content:center; margin-top: 10px;" onclick="submitPlayerRecord()">🔥 Firebase DB 추가하기</button>
+
+            <button class="action-btn btn-record" style="width:100%; justify-content:center;" onclick="submitPlayerRecord()">🔥 Firebase DB에 10명 전적 추가하기</button>
         </div>
     </div>
 
@@ -1950,48 +1958,84 @@
             }
         }
 
-        /* 전적 등록 모달 오픈 */
+        /* 전적 등록 모달 오픈 (10명 한 번에 입력) */
+        const REC_TEAMS = ['blue', 'red'];
+
+        function buildRecordRows() {
+            const options = '<option value="">선수 선택</option>' + playerPool.map(p =>
+                `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)} (${escapeHtml(p.tier)})</option>`
+            ).join('');
+
+            REC_TEAMS.forEach(team => {
+                document.getElementById(`record-${team}-rows`).innerHTML = POSITIONS.map(pos => `
+                    <div class="rec-row">
+                        <span class="rec-lane">${pos}</span>
+                        <select id="rec-${team}-${pos}-player">${options}</select>
+                        <input type="text" id="rec-${team}-${pos}-champ" placeholder="챔피언" maxlength="30">
+                        <input type="number" id="rec-${team}-${pos}-k" min="0" placeholder="K">
+                        <input type="number" id="rec-${team}-${pos}-d" min="0" placeholder="D">
+                        <input type="number" id="rec-${team}-${pos}-a" min="0" placeholder="A">
+                    </div>
+                `).join('');
+            });
+        }
+
         function openRecordModal(defaultPlayer = '') {
-            const selectEl = document.getElementById('recordPlayerSelect');
-            selectEl.innerHTML = playerPool.map(p => `<option value="${p.name}" ${p.name === defaultPlayer ? 'selected' : ''}>${p.name} (${p.tier})</option>`).join('');
-            
-            syncRecordLane();
-            document.getElementById('recordChampion').value = '';
-            document.getElementById('recordK').value = '0';
-            document.getElementById('recordD').value = '0';
-            document.getElementById('recordA').value = '0';
-            
+            buildRecordRows();
+            document.getElementById('recordWinTeam').value = 'blue';
+
+            /* 5vs5 카드가 깔려 있으면 그 라인/선수 배치를 그대로 채움 */
+            const boardNames = {};
+            REC_TEAMS.forEach(team => POSITIONS.forEach(pos => {
+                const el = document.querySelector(`#${team}-${pos} .p-name`);
+                if (el) boardNames[`${team}-${pos}`] = el.innerText.trim();
+            }));
+
+            if (Object.keys(boardNames).length === 10) {
+                Object.entries(boardNames).forEach(([key, name]) => {
+                    document.getElementById(`rec-${key}-player`).value = name;
+                });
+            } else if (defaultPlayer) {
+                /* 카드가 없으면 눌렀던 선수만 블루팀 자기 라인에 미리 선택 */
+                const p = playerPool.find(x => x.name === defaultPlayer);
+                if (p && p.lanes && p.lanes.length > 0) {
+                    document.getElementById(`rec-blue-${p.lanes[0]}-player`).value = p.name;
+                }
+            }
+
             openModal('recordModal');
         }
 
-        /* 선수를 바꾸면 그 선수의 첫 번째 가능 라인을 기본값으로 */
-        function syncRecordLane() {
-            const name = document.getElementById('recordPlayerSelect').value;
-            const p = playerPool.find(x => x.name === name);
-            const laneSel = document.getElementById('recordLane');
-            if (p && p.lanes && p.lanes.length > 0 && laneSel) laneSel.value = p.lanes[0];
-        }
-
-        /* 전적 기록 저장 (Firebase 느낌의 비동기 피드백) */
+        /* 10명 전적 한 번에 저장 (Firebase는 batch로 전부 성공/전부 실패) */
         function submitPlayerRecord() {
-            const playerName = document.getElementById('recordPlayerSelect').value;
-            const result = document.getElementById('recordMatchResult').value;
-            const champion = (document.getElementById('recordChampion').value.trim() || '소환사의 골짜기').slice(0, 30);
-            const k = parseInt(document.getElementById('recordK').value) || 0;
-            const d = parseInt(document.getElementById('recordD').value) || 0;
-            const a = parseInt(document.getElementById('recordA').value) || 0;
-            const lane = document.getElementById('recordLane').value;
+            const winTeam = document.getElementById('recordWinTeam').value;
+            const ts = Date.now();
+            const used = new Set();
+            const entries = [];
 
-            if (!playerName) return alert('선수를 선택해 주세요.');
+            for (const team of REC_TEAMS) {
+                for (const pos of POSITIONS) {
+                    const teamLabel = team === 'blue' ? '블루' : '레드';
+                    const name = document.getElementById(`rec-${team}-${pos}-player`).value;
+                    if (!name) return alert(`${teamLabel} ${pos} 선수를 선택해 주세요.`);
+                    if (used.has(name)) return alert(`${name} 선수가 중복으로 선택되었습니다.`);
+                    used.add(name);
 
-            const newRecord = {
-                player: playerName,
-                result: result,
-                lane: lane,
-                champion: champion,
-                kda: `${k}/${d}/${a}`,
-                ts: Date.now()
-            };
+                    const champion = (document.getElementById(`rec-${team}-${pos}-champ`).value.trim() || '소환사의 골짜기').slice(0, 30);
+                    const k = parseInt(document.getElementById(`rec-${team}-${pos}-k`).value) || 0;
+                    const d = parseInt(document.getElementById(`rec-${team}-${pos}-d`).value) || 0;
+                    const a = parseInt(document.getElementById(`rec-${team}-${pos}-a`).value) || 0;
+
+                    entries.push({
+                        player: name.slice(0, 20),
+                        result: team === winTeam ? 'win' : 'loss',
+                        lane: pos,
+                        champion: champion,
+                        kda: `${k}/${d}/${a}`,
+                        ts: ts
+                    });
+                }
+            }
 
             /* Firebase 설정은 했는데 연결 초기화에 실패한 경우 */
             if (isFirebaseConfigured() && !fbDb) {
@@ -2000,9 +2044,11 @@
 
             /* Firebase 저장 (화면은 실시간 리스너가 자동 갱신) */
             if (fbDb) {
-                fbDb.collection(FB_COLLECTION).add(newRecord)
+                const batch = fbDb.batch();
+                entries.forEach(e => batch.set(fbDb.collection(FB_COLLECTION).doc(), e));
+                batch.commit()
                     .then(() => {
-                        showFirebaseToast(`🔥 [Firebase DB] ${playerName} 선수의 전적이 저장되었습니다!`);
+                        showFirebaseToast('🔥 [Firebase DB] 10명 선수의 전적이 저장되었습니다!');
                     })
                     .catch(err => {
                         console.error('Firebase 저장 실패', err);
@@ -2013,14 +2059,14 @@
             }
 
             /* Firebase 미설정: 기존처럼 이 브라우저에만 저장 */
-            if (!playerMatchRecords[playerName]) {
-                playerMatchRecords[playerName] = [];
-            }
-            playerMatchRecords[playerName].unshift(newRecord);
+            entries.forEach(e => {
+                if (!playerMatchRecords[e.player]) playerMatchRecords[e.player] = [];
+                playerMatchRecords[e.player].unshift(e);
+            });
             saveMatchRecords();
 
             closeModal('recordModal');
-            showFirebaseToast(`💾 ${playerName} 선수의 전적이 이 브라우저에 저장되었습니다. (Firebase 미설정)`);
+            showFirebaseToast('💾 10명 선수의 전적이 이 브라우저에 저장되었습니다. (Firebase 미설정)');
 
             renderCards();
             renderStatusPanel();
@@ -2396,7 +2442,7 @@
                         <button class="card-delete" onclick="deleteCard(${p.id})" title="삭제">✕</button>
                         <button class="card-edit" onclick="openEditLaneModal(${p.id})" title="라인 수정">✏️</button>
                         <button class="card-stats-btn" onclick="openPlayerStatsModal('${p.name}')" title="전적 보기">📊</button>
-                        <button class="card-record-add" onclick="openAuthModal('recordModal', '${p.name}')" title="전적 추가">+</button>
+                        <button class="card-record-add" onclick="openAuthModal('recordModal', '${p.name}')" title="전적 추가 (10명 한 번에)">+</button>
                         <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}" onclick="togglePlayerActive(${p.id})" title="클릭하여 참전/비참전 토글">
                         <strong style="color:#fff;">${p.name}</strong>
                         <span class="p-tier-badge" style="color:${tierInfo.color};">${p.tier}</span>
