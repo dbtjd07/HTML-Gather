@@ -136,11 +136,11 @@
         /* 좌측 선수 참가/팀 현황 박스 */
         .status-panel {
             position: fixed;
-            top: 150px;
+            top: 165px;
             left: 15px;
             z-index: 1000;
             width: 200px;
-            max-height: calc(100vh - 175px);
+            max-height: calc(100vh - 190px);
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid #334155;
             border-radius: 12px;
@@ -1015,6 +1015,16 @@
             padding: 1px 8px;
             margin-right: 4px;
         }
+        /* Firebase 연결 상태 표시 */
+        .fb-status {
+            font-size: 0.78em;
+            font-weight: bold;
+            text-align: center;
+            padding-top: 8px;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -1066,6 +1076,7 @@
                 <span class="slider"></span>
             </label>
         </div>
+        <div class="fb-status" id="fbStatus">🔥 Firebase 확인 중...</div>
     </div>
 
     <!-- 좌측 선수 참가/팀 현황 레이아웃 박스 -->
@@ -1336,6 +1347,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Firebase SDK (Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script>
         /* 규칙 데이터베이스 (총 30개) */
@@ -1657,6 +1672,177 @@
             { id: 19, name: '김혜준', tier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준'), active: true }
         ];
 
+        /* ====================================================
+           🔥 Firebase Firestore 설정 (프로젝트: lol-games)
+           전적은 Firestore의 'matchRecords' 컬렉션에 저장됩니다.
+        ==================================================== */
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzL_K7VIDXIlH_byVD9-TkP3g-3C-WVFE",
+            authDomain: "lol-games-395ab.firebaseapp.com",
+            projectId: "lol-games-395ab",
+            storageBucket: "lol-games-395ab.firebasestorage.app",
+            messagingSenderId: "106124852261",
+            appId: "1:106124852261:web:8801b59bd82039ae9753cc"
+        };
+        const FB_COLLECTION = 'matchRecords';
+
+        let fbDb = null;
+        let fbFirstSnapshotDone = false;
+
+        function isFirebaseConfigured() {
+            return typeof firebaseConfig.apiKey === 'string'
+                && firebaseConfig.apiKey.length > 0
+                && !firebaseConfig.apiKey.startsWith('YOUR_')
+                && typeof firebaseConfig.projectId === 'string'
+                && firebaseConfig.projectId.length > 0
+                && !firebaseConfig.projectId.startsWith('YOUR_');
+        }
+
+        function escapeHtml(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function formatRecordDate(rec) {
+            if (rec.ts && !rec.legacy) {
+                const d = new Date(rec.ts);
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+            return rec.date || '';
+        }
+
+        function setFbStatus(state) {
+            const el = document.getElementById('fbStatus');
+            if (!el) return;
+            const map = {
+                local:      ['💾 로컬 저장 (Firebase 미설정)', '#94a3b8'],
+                connecting: ['🔥 Firebase 연결 중...', '#fbbf24'],
+                online:     ['🔥 Firebase 연결됨', '#10b981'],
+                offline:    ['⚠️ Firebase 연결 끊김', '#f59e0b'],
+                error:      ['❌ Firebase 오류 (콘솔 확인)', '#ef4444']
+            };
+            const [text, color] = map[state] || map.local;
+            el.innerText = text;
+            el.style.color = color;
+        }
+
+        /* Firestore 문서들을 {선수이름: [전적...]} 형태로 변환 (최신순) */
+        function rebuildRecordsFromFirebase(snapshot) {
+            const rebuilt = {};
+            snapshot.forEach(doc => {
+                const rec = doc.data();
+                if (!rec || typeof rec.player !== 'string' || !rec.player) return;
+                if (typeof rec.ts !== 'number') return;
+                (rebuilt[rec.player] = rebuilt[rec.player] || []).push(rec);
+            });
+            Object.values(rebuilt).forEach(arr => arr.sort((a, b) => (b.ts || 0) - (a.ts || 0)));
+            playerMatchRecords = rebuilt;
+
+            renderCards();
+            renderStatusPanel();
+
+            const statsModal = document.getElementById('playerStatsModal');
+            if (statsModal && statsModal.style.display === 'flex' && statsViewPlayer) {
+                renderPlayerStats();
+            }
+        }
+
+        function initFirebase() {
+            if (!isFirebaseConfigured()) {
+                setFbStatus('local');
+                return;
+            }
+            if (typeof firebase === 'undefined' || typeof firebase.firestore !== 'function') {
+                console.error('Firebase SDK를 불러오지 못했습니다. (인터넷 연결/차단 확인)');
+                setFbStatus('error');
+                return;
+            }
+
+            setFbStatus('connecting');
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                fbDb = firebase.firestore();
+            } catch (e) {
+                console.error('Firebase 초기화 실패', e);
+                fbDb = null;
+                setFbStatus('error');
+                return;
+            }
+
+            fbDb.collection(FB_COLLECTION).onSnapshot({ includeMetadataChanges: true }, snap => {
+                const fromCache = snap.metadata.fromCache;
+                if (fromCache) setFbStatus(fbFirstSnapshotDone ? 'offline' : 'connecting');
+                else setFbStatus('online');
+
+                rebuildRecordsFromFirebase(snap);
+
+                if (!fromCache && !fbFirstSnapshotDone) {
+                    fbFirstSnapshotDone = true;
+                    maybeMigrateLocalRecords();
+                }
+            }, err => {
+                console.error('Firebase 읽기 실패', err);
+                setFbStatus('error');
+                showFirebaseToast('❌ Firebase 읽기 실패: Firestore 생성/규칙을 확인하세요 (F12 콘솔 참고)');
+            });
+        }
+
+        /* 예전에 이 브라우저(localStorage)에 쌓아둔 전적을 한 번만 Firestore로 업로드 */
+        function maybeMigrateLocalRecords() {
+            if (!fbDb) return;
+            try {
+                if (localStorage.getItem('lol_fb_migrated') === '1') return;
+
+                const local = JSON.parse(localStorage.getItem('lol_match_records') || '{}') || {};
+                const names = Object.keys(local).filter(n => Array.isArray(local[n]) && local[n].length > 0);
+                if (names.length === 0) {
+                    localStorage.setItem('lol_fb_migrated', '1');
+                    return;
+                }
+
+                const total = names.reduce((sum, n) => sum + local[n].length, 0);
+                const ok = confirm(`이 브라우저에 저장돼 있던 전적 ${total}건을 Firebase로 올릴까요?\n(취소하면 다시 묻지 않습니다)`);
+                if (!ok) {
+                    localStorage.setItem('lol_fb_migrated', '1');
+                    return;
+                }
+
+                const entries = [];
+                const base = Date.now();
+                names.forEach(name => {
+                    local[name].forEach((rec, i) => {
+                        entries.push({
+                            player: String(name).slice(0, 20),
+                            result: rec.result === 'win' ? 'win' : 'loss',
+                            lane: String(rec.lane || '미지정').slice(0, 10),
+                            champion: String(rec.champion || '').slice(0, 30),
+                            kda: String(rec.kda || '0/0/0').slice(0, 20),
+                            ts: base - (i + 1) * 1000,
+                            legacy: true,
+                            date: String(rec.date || '이전 기록').slice(0, 20)
+                        });
+                    });
+                });
+
+                const jobs = [];
+                for (let i = 0; i < entries.length; i += 400) {
+                    const batch = fbDb.batch();
+                    entries.slice(i, i + 400).forEach(e => batch.set(fbDb.collection(FB_COLLECTION).doc(), e));
+                    jobs.push(batch.commit());
+                }
+
+                Promise.all(jobs).then(() => {
+                    localStorage.setItem('lol_fb_migrated', '1');
+                    showFirebaseToast(`🔥 기존 전적 ${total}건을 Firebase로 옮겼습니다!`);
+                }).catch(err => {
+                    console.error('전적 이전 실패', err);
+                    alert('기존 전적을 Firebase로 올리지 못했습니다.\n(Firestore 규칙을 확인해 주세요. 다음 접속 때 다시 시도합니다.)');
+                });
+            } catch (e) {
+                console.error('로컬 전적 이전 중 오류', e);
+            }
+        }
+
         /* 각 선수별 전적 기록 초기 샘플 데이터 */
         const defaultPlayerMatchRecords = {
         };
@@ -1665,6 +1851,7 @@
         let playerMatchRecords = {};
 
         function loadMatchRecords() {
+            if (isFirebaseConfigured()) { playerMatchRecords = {}; return; }
             try {
                 const savedData = localStorage.getItem('lol_match_records');
                 if (savedData) {
@@ -1780,7 +1967,7 @@
         function submitPlayerRecord() {
             const playerName = document.getElementById('recordPlayerSelect').value;
             const result = document.getElementById('recordMatchResult').value;
-            const champion = document.getElementById('recordChampion').value.trim() || '소환사의 골짜기';
+            const champion = (document.getElementById('recordChampion').value.trim() || '소환사의 골짜기').slice(0, 30);
             const k = parseInt(document.getElementById('recordK').value) || 0;
             const d = parseInt(document.getElementById('recordD').value) || 0;
             const a = parseInt(document.getElementById('recordA').value) || 0;
@@ -1789,13 +1976,34 @@
             if (!playerName) return alert('선수를 선택해 주세요.');
 
             const newRecord = {
+                player: playerName,
                 result: result,
                 lane: lane,
                 champion: champion,
                 kda: `${k}/${d}/${a}`,
-                date: '방금 전'
+                ts: Date.now()
             };
 
+            /* Firebase 설정은 했는데 연결 초기화에 실패한 경우 */
+            if (isFirebaseConfigured() && !fbDb) {
+                return alert('Firebase에 연결되지 않아 전적을 저장할 수 없습니다.\n설정(firebaseConfig)과 인터넷 연결을 확인해 주세요.');
+            }
+
+            /* Firebase 저장 (화면은 실시간 리스너가 자동 갱신) */
+            if (fbDb) {
+                fbDb.collection(FB_COLLECTION).add(newRecord)
+                    .then(() => {
+                        showFirebaseToast(`🔥 [Firebase DB] ${playerName} 선수의 전적이 저장되었습니다!`);
+                    })
+                    .catch(err => {
+                        console.error('Firebase 저장 실패', err);
+                        alert('Firebase 저장에 실패했습니다.\n데이터베이스 규칙/설정을 확인해 주세요.\n' + (err && err.message ? err.message : ''));
+                    });
+                closeModal('recordModal');
+                return;
+            }
+
+            /* Firebase 미설정: 기존처럼 이 브라우저에만 저장 */
             if (!playerMatchRecords[playerName]) {
                 playerMatchRecords[playerName] = [];
             }
@@ -1803,9 +2011,8 @@
             saveMatchRecords();
 
             closeModal('recordModal');
-            showFirebaseToast(`🔥 [Firebase DB] ${playerName} 선수의 전적이 실시간 반영되었습니다!`);
+            showFirebaseToast(`💾 ${playerName} 선수의 전적이 이 브라우저에 저장되었습니다. (Firebase 미설정)`);
 
-            // UI 실시간 갱신
             renderCards();
             renderStatusPanel();
         }
@@ -1823,6 +2030,7 @@
             renderStatusPanel();
             setupPasteAndDrop();
             setupToggleEvents();
+            initFirebase();
 
             const bgMusic = document.getElementById('bgMusic');
             if (bgMusic) bgMusic.volume = 0.15;
@@ -2072,14 +2280,14 @@
 
             historyListEl.innerHTML = records.map(rec => {
                 const isWin = rec.result === 'win';
-                const laneTag = rec.lane ? `<span class="history-lane-tag">${rec.lane}</span>` : '';
+                const laneTag = rec.lane ? `<span class="history-lane-tag">${escapeHtml(rec.lane)}</span>` : '';
                 return `
                     <div class="match-history-item ${isWin ? 'win' : 'loss'}">
                         <div>
-                            <strong>${isWin ? '승리' : '패배'}</strong> · ${laneTag}<span style="color:#fff;">${rec.champion}</span>
+                            <strong>${isWin ? '승리' : '패배'}</strong> · ${laneTag}<span style="color:#fff;">${escapeHtml(rec.champion)}</span>
                         </div>
                         <div>
-                            <span>KDA: ${rec.kda}</span> &nbsp;|&nbsp; <span style="font-size: 0.8em; opacity: 0.8;">${rec.date}</span>
+                            <span>KDA: ${escapeHtml(rec.kda)}</span> &nbsp;|&nbsp; <span style="font-size: 0.8em; opacity: 0.8;">${escapeHtml(formatRecordDate(rec))}</span>
                         </div>
                     </div>
                 `;
