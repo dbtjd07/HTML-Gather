@@ -136,11 +136,11 @@
         /* 좌측 선수 참가/팀 현황 박스 */
         .status-panel {
             position: fixed;
-            top: 165px;
+            top: 150px;
             left: 15px;
             z-index: 1000;
             width: 200px;
-            max-height: calc(100vh - 190px);
+            max-height: calc(100vh - 175px);
             background: rgba(15, 23, 42, 0.9);
             border: 1px solid #334155;
             border-radius: 12px;
@@ -1015,16 +1015,9 @@
             padding: 1px 8px;
             margin-right: 4px;
         }
-        /* Firebase 연결 상태 표시 */
-        .fb-status {
-            font-size: 0.78em;
-            font-weight: bold;
-            text-align: center;
-            padding-top: 8px;
-            border-top: 1px solid #334155;
-            color: #94a3b8;
-            user-select: none;
-        }
+        /* 5vs5 카드 뒷면 KDA */
+        .flip-card-back .p-kda { font-size: 0.68em; color: #94a3b8; font-weight: normal; margin-top: 3px; }
+        .zoom-card-container .p-kda { font-size: 0.9em; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -1076,7 +1069,6 @@
                 <span class="slider"></span>
             </label>
         </div>
-        <div class="fb-status" id="fbStatus">🔥 Firebase 확인 중...</div>
     </div>
 
     <!-- 좌측 선수 참가/팀 현황 레이아웃 박스 -->
@@ -2296,6 +2288,7 @@
 
         /* 카드 목록 렌더링 - 각 카드 밑 승률 & KDA 뱃지 추가 */
         function renderCards() {
+            refreshBoardKda();
             document.getElementById('card-count').innerText = playerPool.length;
             const modalListEl = document.getElementById('modalCardList');
             if (playerPool.length === 0) {
@@ -2522,6 +2515,19 @@
         }
 
         /* 3D 카드 뒷면에 승률 및 KDA 세부 표시 */
+        /* 5vs5 카드용 KDA 텍스트 (전적이 없으면 -) */
+        function getCardKdaText(name) {
+            const st = getPlayerStatsSummary(name);
+            return st.total === 0 ? 'KDA -' : `KDA ${st.kdaRatio}`;
+        }
+
+        /* 전적이 바뀌면 이미 깔려 있는 카드의 KDA도 갱신 */
+        function refreshBoardKda() {
+            document.querySelectorAll('.p-kda[data-player]').forEach(el => {
+                el.innerText = getCardKdaText(el.getAttribute('data-player'));
+            });
+        }
+
         function createCardElement(teamColor, player, teamName, forceFlipped = false) {
             const card = document.createElement('div');
             card.className = `flip-card ${teamColor}-team ${forceFlipped ? 'flipped' : ''}`;
@@ -2539,6 +2545,7 @@
                         <div class="p-name">${player.name}</div>
                         <div class="p-tier">${player.tier}</div>
                         <div class="p-lanes">${player.lanes.join(', ')}</div>
+                        <div class="p-kda" data-player="${escapeHtml(player.name)}">${getCardKdaText(player.name)}</div>
                     </div>
                 </div>
             `;
