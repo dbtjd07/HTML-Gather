@@ -649,6 +649,21 @@
             color: #f8fafc;
         }
 
+        /* 챔피언 모스트 픽 / KDA 높은 픽 */
+        .champ-highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .champ-col { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 12px; }
+        .champ-col h4 { font-size: 0.85em; color: #cbd5e1; margin: 0 0 10px 0; }
+        .champ-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #1e293b; font-size: 0.85em; }
+        .champ-row:first-of-type { border-top: none; }
+        .champ-rank { width: 20px; height: 20px; border-radius: 50%; background: #334155; color: #e2e8f0; font-size: 0.75em; font-weight: bold; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .champ-row:nth-of-type(1) .champ-rank { background: #ca8a04; color: #fff; }
+        .champ-info { flex: 1; min-width: 0; }
+        .champ-name { color: #f8fafc; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .champ-sub { color: #94a3b8; font-size: 0.8em; }
+        .champ-main-val { color: #e2e8f0; font-weight: bold; text-align: right; white-space: nowrap; }
+        .champ-empty { color: #64748b; font-size: 0.8em; text-align: center; padding: 8px 0; }
+        @media (max-width: 480px) { .champ-highlights { grid-template-columns: 1fr; } }
+
         .match-history-list {
             display: flex;
             flex-direction: column;
@@ -1254,6 +1269,8 @@
                     <span class="stat-box-value" id="statAvgKda">0.00</span>
                 </div>
             </div>
+
+            <div class="champ-highlights" id="champHighlights"></div>
 
             <h3 style="font-size: 1em; margin-bottom: 10px; color: #cbd5e1;">📍 라인별 전적</h3>
             <table class="lane-stats-table">
@@ -2221,6 +2238,65 @@
             renderPlayerStats();
         }
 
+        /* 챔피언별 통계 (모스트 픽 / KDA 높은 픽) */
+        function getChampionStats(records) {
+            const map = {};
+            records.forEach(r => {
+                const name = String(r.champion || '').trim();
+                if (!name || name === '소환사의 골짜기') return;
+                const key = name.toLowerCase();
+                const m = map[key] || (map[key] = { name, games: 0, wins: 0, k: 0, d: 0, a: 0 });
+                m.games++;
+                if (r.result === 'win') m.wins++;
+                const parts = String(r.kda || '0/0/0').split('/').map(Number);
+                m.k += parts[0] || 0; m.d += parts[1] || 0; m.a += parts[2] || 0;
+            });
+            return Object.values(map).map(m => ({
+                ...m,
+                winRate: Math.round((m.wins / m.games) * 100),
+                kdaNum: m.d > 0 ? (m.k + m.a) / m.d : Infinity,
+                kdaText: m.d > 0 ? ((m.k + m.a) / m.d).toFixed(2) : 'Perfect',
+                avg: `${(m.k / m.games).toFixed(1)}/${(m.d / m.games).toFixed(1)}/${(m.a / m.games).toFixed(1)}`
+            }));
+        }
+
+        function renderChampionHighlights(records) {
+            const el = document.getElementById('champHighlights');
+            if (!el) return;
+            const list = getChampionStats(records);
+
+            const most = [...list].sort((x, y) => y.games - x.games || y.winRate - x.winRate || y.kdaNum - x.kdaNum).slice(0, 3);
+            /* KDA 순위: 2판 이상 플레이한 챔피언을 우선 (1판짜리 우연한 고KDA 방지) */
+            const best = [...list].sort((x, y) => {
+                const gx = x.games >= 2 ? 1 : 0, gy = y.games >= 2 ? 1 : 0;
+                if (gx !== gy) return gy - gx;
+                if (x.kdaNum !== y.kdaNum) return y.kdaNum - x.kdaNum;
+                return (y.k + y.a) - (x.k + x.a) || y.games - x.games;
+            }).slice(0, 3);
+
+            const rows = (arr, mainFn, subFn) => arr.length === 0
+                ? '<div class="champ-empty">기록 없음</div>'
+                : arr.map((c, i) => `
+                    <div class="champ-row">
+                        <div class="champ-rank">${i + 1}</div>
+                        <div class="champ-info">
+                            <div class="champ-name">${escapeHtml(c.name)}</div>
+                            <div class="champ-sub">${subFn(c)}</div>
+                        </div>
+                        <div class="champ-main-val">${mainFn(c)}</div>
+                    </div>`).join('');
+
+            el.innerHTML = `
+                <div class="champ-col">
+                    <h4>🏆 모스트 픽 TOP 3</h4>
+                    ${rows(most, c => `${c.games}판`, c => `${c.wins}승 ${c.games - c.wins}패 · ${c.winRate}%`)}
+                </div>
+                <div class="champ-col">
+                    <h4>⚔️ KDA 높은 픽 TOP 3</h4>
+                    ${rows(best, c => c.kdaText, c => `${c.avg} · ${c.games}판`)}
+                </div>`;
+        }
+
         function renderPlayerStats() {
             const playerName = statsViewPlayer;
             const lane = statsViewLane;
@@ -2253,6 +2329,9 @@
                 const label = key === 'all' ? '전체' : key;
                 return `<button type="button" class="lane-filter-tab ${key === lane ? 'active' : ''}" onclick="setStatsLaneFilter('${key}')">${label} (${cnt})</button>`;
             }).join('');
+
+            /* 챔피언 모스트 픽 / KDA 높은 픽 (선택한 라인 기준) */
+            renderChampionHighlights(records);
 
             /* 상단 요약 박스 (선택한 라인 기준) */
             const stats = getPlayerStatsSummary(playerName, lane);
