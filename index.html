@@ -2312,10 +2312,8 @@
             const list = getChampionStats(records);
 
             const most = [...list].sort((x, y) => y.games - x.games || y.winRate - x.winRate || y.kdaNum - x.kdaNum).slice(0, 3);
-            /* KDA 순위: 2판 이상 플레이한 챔피언을 우선 (1판짜리 우연한 고KDA 방지) */
-            const best = [...list].sort((x, y) => {
-                const gx = x.games >= 2 ? 1 : 0, gy = y.games >= 2 ? 1 : 0;
-                if (gx !== gy) return gy - gx;
+            /* KDA 순위: 2판 이상 플레이한 챔피언만 표시 */
+            const best = list.filter(c => c.games >= 2).sort((x, y) => {
                 if (x.kdaNum !== y.kdaNum) return y.kdaNum - x.kdaNum;
                 return (y.k + y.a) - (x.k + x.a) || y.games - x.games;
             }).slice(0, 3);
