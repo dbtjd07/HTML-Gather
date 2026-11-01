@@ -2640,10 +2640,10 @@
         }
 
         /* 3D 카드 뒷면에 승률 및 KDA 세부 표시 */
-        /* 5vs5 카드용 KDA 텍스트 (전적이 없으면 -) */
+        /* 5vs5 카드용 승률 텍스트 (전적이 없으면 -) */
         function getCardKdaText(name) {
             const st = getPlayerStatsSummary(name);
-            return st.total === 0 ? 'KDA -' : `KDA ${st.kdaRatio}`;
+            return st.total === 0 ? '승률 -' : `승률 ${st.winRate}%`;
         }
 
         /* 전적이 바뀌면 이미 깔려 있는 카드의 KDA도 갱신 */
