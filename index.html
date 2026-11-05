@@ -3003,23 +3003,11 @@
         };
 
         function generateRandomTurnOrders() {
-            const teams = ['blue', 'red'];
-            let orders = [];
-            let isValid = false;
-
-            while (!isValid) {
-                orders = [];
-                for (let i = 0; i < 4; i++) {
-                    orders.push(teams[Math.floor(Math.random() * 2)]);
-                }
-
-                let isThreeInARow = false;
-                if (orders[0] === orders[1] && orders[1] === orders[2]) isThreeInARow = true;
-                if (orders[1] === orders[2] && orders[2] === orders[3]) isThreeInARow = true;
-
-                if (!isThreeInARow) {
-                    isValid = true;
-                }
+            // 한 팀당 정확히 2번씩만 지명 (총 4번) - 순서만 무작위로 섞음
+            const orders = ['blue', 'blue', 'red', 'red'];
+            for (let i = orders.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [orders[i], orders[j]] = [orders[j], orders[i]];
             }
             return orders;
         }
