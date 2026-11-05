@@ -1414,7 +1414,7 @@
 
         /* 애들 티어 리스트 데이터 정의 및 점수화 매핑 */
         const TIER_SCORE_MAP = {
-            'SSR': 15, 'S+': 12, 'S': 11,
+            'SSR': 13, 'S+': 12, 'S': 11,
             'A+': 10, 'A': 9,
             'B+': 8, 'B': 7,
             'C+': 6, 'C': 5,
@@ -3209,19 +3209,31 @@
         }
     </script>
     <!-- ===================================================================
-         [추가 코드] 티어 기반 뽑기 숨김/해금 + 티어 표시 제어 + console.log
+         [추가 코드] 티어 기반 뽑기 숨김/해금 + 라인 티어 표시 제어 + console.log
          기존 코드는 수정하지 않고, 이 블록만 새로 추가했습니다.
          =================================================================== -->
     <style>
         /* 티어 기반 뽑기 버튼: 해금 전에는 숨김 */
         body:not(.tier-pick-unlocked) .btn-tier-pick { display: none !important; }
 
-        /* 5vs5 카드 섞기 / 밸런스 카드 섞기: 카드에 티어 표시 안 함 (티어 기반 뽑기일 때만 표시) */
-        body:not(.tier-pick-mode) .flip-card-back .p-tier,
+        /* 라인별 티어 뱃지("탑 티어: S+")는 티어 기반 뽑기에서만 표시 (롤 티어는 모든 뽑기에서 그대로 표시) */
         body:not(.tier-pick-mode) .role-tier-badge { display: none !important; }
 
-        /* 라인 대표 드래프트: 티어 표시 안 함 */
-        .captain-tier, .cand-tier, .slot-tier { display: none !important; }
+        /* 라인별 전적 표: 라인 이름 아래에 해당 라인 티어 표시 */
+        .lane-stats-table td.lane-name-cell .lane-tier-sub {
+            display: block;
+            margin: 3px auto 0;
+            width: fit-content;
+            font-size: 0.78em;
+            font-weight: bold;
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            border-radius: 4px;
+            padding: 0 5px;
+        }
+        .lane-stats-table td.lane-name-cell .lane-tier-sub.no-tier { color: #64748b; background: transparent; border-color: #334155; }
+
     </style>
 
     <script>
@@ -3235,7 +3247,7 @@
         const SEQUENCE = [
             { id: 'toggleBgm',    label: '🎵 배경음악', need: 4 },
             { id: 'toggleSound',  label: '🔊 효과음',   need: 4 },
-            { id: 'toggleMotion', label: '✨ 효과 모션', need: 4 }
+            { id: 'toggleMotion', label: '✨ 효과 모션', need: 2 }
         ];
         let stage = 0;
         let count = 0;
@@ -3432,6 +3444,37 @@
         window.startDraftMode = function () {
             console.log('[라인 대표 드래프트] 시작');
             return _draft.apply(this, arguments);
+        };
+
+        /* ---------- 5) 라인별 전적 표: 라인 이름 아래에 해당 라인 티어 표시 ----------
+           기존 renderPlayerStats를 그대로 호출한 뒤, 만들어진 표에 티어만 덧붙입니다. */
+        function addLaneTiersToStatsTable() {
+            try {
+                const body = document.getElementById('laneStatsBody');
+                if (!body || typeof statsViewPlayer === 'undefined' || !statsViewPlayer) return;
+                const tiers = MEMBER_ROLE_TIERS[statsViewPlayer] || {};
+
+                body.querySelectorAll('td.lane-name-cell').forEach(function (cell) {
+                    if (cell.querySelector('.lane-tier-sub')) return;
+                    const lane = cell.textContent.trim();
+                    if (POSITIONS.indexOf(lane) === -1) return; /* '미지정' 등은 제외 */
+
+                    const tier = tiers[lane] || '-';
+                    const tag = document.createElement('span');
+                    tag.className = 'lane-tier-sub' + (tier === '-' ? ' no-tier' : '');
+                    tag.textContent = tier;
+                    cell.appendChild(tag);
+                });
+            } catch (err) {
+                console.warn('[라인별 전적] 라인 티어 표시 중 오류', err);
+            }
+        }
+
+        const _renderStats = window.renderPlayerStats;
+        window.renderPlayerStats = function () {
+            const ret = _renderStats.apply(this, arguments);
+            addLaneTiersToStatsTable();
+            return ret;
         };
 
         console.log('[티어 해금] 준비 완료 - 배경음악 4번 → 효과음 4번 → 효과 모션 2번(껐다 켜기)');
