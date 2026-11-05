@@ -225,24 +225,26 @@
         h1 { color: #f8fafc; margin-bottom: 25px; font-size: 2em; }
         
         /* 메인 버튼 그룹 */
-        .main-btn-group { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 25px; }
-        button.action-btn { padding: 14px 24px; font-size: 1.05em; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; color: white; display: flex; align-items: center; gap: 8px; }
+        .main-btn-group { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 25px; }
+        button.action-btn { padding: 12px 18px; font-size: 0.98em; font-weight: bold; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; color: white; display: flex; align-items: center; gap: 6px; }
         .btn-add { background: #2563eb; } .btn-add:hover { background: #1d4ed8; transform: translateY(-2px); }
         .btn-record { background: #10b981; } .btn-record:hover { background: #059669; transform: translateY(-2px); }
         .btn-view { background: #64748b; } .btn-view:hover { background: #475569; transform: translateY(-2px); }
         .btn-team { background: #059669; } .btn-team:hover { background: #047857; transform: translateY(-2px); }
         .btn-draft { background: #8b5cf6; } .btn-draft:hover { background: #7c3aed; transform: translateY(-2px); }
+        .btn-tier-pick { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: 1px solid #fbbf24; } 
+        .btn-tier-pick:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); transform: translateY(-2px); }
 
         /* 정사각형 밸런스 버튼 */
         .btn-balance {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             padding: 0;
             background: #d97706;
             border-radius: 10px;
             border: none;
             cursor: pointer;
-            font-size: 1.3em;
+            font-size: 1.2em;
             color: white;
             display: flex;
             align-items: center;
@@ -332,7 +334,7 @@
         .flip-card {
             background-color: transparent;
             width: 130px;
-            height: 205px;
+            height: 215px;
             perspective: 1000px;
             opacity: 0;
             transform: translateY(20px);
@@ -444,12 +446,12 @@
             transform: rotateY(180deg);
         }
         .flip-card-back img {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--tier-color, #fbbf24);
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .zoom-card-container .flip-card-back img {
             width: 85px;
@@ -457,12 +459,23 @@
             border-width: 3px;
             margin-bottom: 8px;
         }
-        .flip-card-back .p-name { font-size: 0.95em; font-weight: bold; color: #fff; margin-bottom: 2px; word-break: break-all; }
+        .flip-card-back .p-name { font-size: 0.9em; font-weight: bold; color: #fff; margin-bottom: 1px; word-break: break-all; }
         .zoom-card-container .p-name { font-size: 1.4em; margin-bottom: 4px; }
-        .flip-card-back .p-tier { font-size: 0.72em; color: var(--tier-color, #38bdf8); font-weight: bold; margin-bottom: 2px; }
+        .flip-card-back .p-tier { font-size: 0.72em; color: var(--tier-color, #38bdf8); font-weight: bold; margin-bottom: 1px; }
         .zoom-card-container .p-tier { font-size: 1em; margin-bottom: 4px; }
-        .flip-card-back .p-lanes { font-size: 0.65em; color: #94a3b8; line-height: 1.2; word-break: keep-all; }
+        .flip-card-back .p-lanes { font-size: 0.65em; color: #94a3b8; line-height: 1.1; word-break: keep-all; }
         .zoom-card-container .p-lanes { font-size: 0.85em; }
+
+        .role-tier-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            border-radius: 4px;
+            font-size: 0.65em;
+            padding: 1px 4px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
 
         .flip-card.flipped .flip-card-back,
         .zoom-card-inner.flip-phase .flip-card-back {
@@ -621,9 +634,7 @@
             opacity: 1;
         }
 
-        /* ----------------------------------------------------
-           📊 선수 전적 모달 전용 스타일
-        ---------------------------------------------------- */
+        /* 📊 선수 전적 모달 전용 스타일 */
         .stats-summary-box {
             display: flex;
             justify-content: space-around;
@@ -691,9 +702,7 @@
             color: #f87171;
         }
 
-        /* ----------------------------------------------------
-           🎲 라인 대표 드래프트 모달 전용 확장
-        ---------------------------------------------------- */
+        /* 🎲 라인 대표 드래프트 모달 전용 확장 */
         #draftModal .modal-content {
             max-width: 1250px !important;
             width: 96%;
@@ -996,9 +1005,7 @@
             font-size: 0.75em;
             font-weight: bold;
         }
-        /* ----------------------------------------------------
-           📍 라인별 전적 전용 스타일
-        ---------------------------------------------------- */
+        /* 📍 라인별 전적 전용 스타일 */
         .lane-filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
         .lane-filter-tab {
             padding: 6px 12px;
@@ -1034,9 +1041,7 @@
         .flip-card-back .p-kda { font-size: 0.68em; color: #94a3b8; font-weight: normal; margin-top: 3px; }
         .zoom-card-container .p-kda { font-size: 0.9em; margin-top: 6px; }
 
-        /* ----------------------------------------------------
-           📝 10명 전적 한 번에 입력 모달
-        ---------------------------------------------------- */
+        /* 📝 10명 전적 한 번에 입력 모달 */
         .record-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
         .record-team { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 14px; }
         .record-team.blue { border-color: rgba(59, 130, 246, 0.5); }
@@ -1132,6 +1137,7 @@
             <button class="action-btn btn-add" onclick="openModal('addModal')">➕ 카드 등록</button>
             <button class="action-btn btn-view" onclick="openModal('viewModal')">🎴 전체 카드 확인 (<span id="card-count">0</span>)</button>
             <button class="action-btn btn-team" onclick="generate5v5Team(false)">🃏 5vs5 카드 섞기</button>
+            <button class="action-btn btn-tier-pick" onclick="generateTierBasedTeam()">🏆 티어 기반 뽑기</button>
             <button class="action-btn btn-draft" onclick="startDraftMode()">🎲 라인 대표 드래프트</button>
             <button class="btn-balance" onclick="generate5v5Team(true)" title="티어 밸런스 매칭">⚖️</button>
         </div>
@@ -1405,6 +1411,40 @@
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "모든 라인 포션 구매 금지 (서폿 제외)" },
             { category: "카테고리 3. 오브젝트 & 인게임 규칙", rule: "전원 제어 와드 2개 이상 상시 구매(집갈때마다)" }
         ];
+
+        /* 애들 티어 리스트 데이터 정의 및 점수화 매핑 */
+        const TIER_SCORE_MAP = {
+            'SSR': 15, 'S+': 12, 'S': 11,
+            'A+': 10, 'A': 9,
+            'B+': 8, 'B': 7,
+            'C+': 6, 'C': 5,
+            'D+': 4, 'D': 3,
+            'E+': 2, 'E': 1,
+            '-': 0
+        };
+
+        const MEMBER_ROLE_TIERS = {
+            '김민규': { '탑': 'S+', '정글': 'SSR', '미드': 'SSR', '원딜': 'S+', '서폿': 'B+' },
+            '오치형': { '탑': 'B', '정글': 'S', '미드': 'S', '원딜': 'D+', '서폿': '-' },
+            '임서진': { '탑': 'S+', '정글': 'S+', '미드': 'A', '원딜': 'A+', '서폿': '-' },
+            '곽현수': { '탑': 'D+', '정글': 'D+', '미드': 'B', '원딜': 'S+', '서폿': '-' },
+            '김주환': { '탑': 'A+', '정글': 'B+', '미드': 'A+', '원딜': 'A', '서폿': 'A+' },
+            '김채훈': { '탑': 'A+', '정글': 'A', '미드': 'S', '원딜': 'A', '서폿': '-' },
+            '김태후': { '탑': 'S', '정글': 'B', '미드': 'S+', '원딜': 'B', '서폿': 'S' },
+            '박재현': { '탑': 'B', '정글': 'A+', '미드': '-', '원딜': 'S', '서폿': '-' },
+            '이선재': { '탑': 'A', '정글': 'D', '미드': '-', '원딜': 'B', '서폿': '-' },
+            '장유성': { '탑': 'C', '정글': 'S', '미드': 'C+', '원딜': 'B+', '서폿': 'SSR' },
+            '정세훈': { '탑': 'B+', '정글': 'D', '미드': 'S+', '원딜': 'SSR', '서폿': 'A' },
+            '최원혁': { '탑': 'C+', '정글': 'D', '미드': 'C', '원딜': '-', '서폿': 'S+' },
+            '한승기': { '탑': 'SSR', '정글': 'A+', '미드': 'C', '원딜': 'C', '서폿': 'S+' },
+            '강희성': { '탑': 'B+', '정글': 'D+', '미드': 'A+', '원딜': 'S', '서폿': 'B' },
+            '손재민': { '탑': 'D', '정글': 'E+', '미드': 'C+', '원딜': 'C', '서폿': 'A+' },
+            '유준서': { '탑': 'C+', '정글': 'C', '미드': 'B', '원딜': 'E+', '서폿': 'D+' },
+            '권도윤': { '탑': 'C', '정글': '-', '미드': '-', '원딜': 'D+', '서폿': 'C+' },
+            '김혜준': { '탑': 'D+', '정글': 'C', '미드': 'D+', '원딜': 'E', '서폿': 'C' },
+            '이민준': { '탑': 'C+', '정글': 'C+', '미드': 'C+', '원딜': 'C+', '서폿': 'C' },
+            '김태윤': { '탑': '-', '정글': '-', '미드': '-', '원딜': 'C+', '서폿': 'C+' }
+        };
 
         function drawRandomRule() {
             playPlaceSound();
@@ -2508,9 +2548,9 @@
             }).join('');
         }
 
-        function assign10Players(pool, balanceMode = false) {
+        function assign10Players(pool, balanceMode = false, useRoleTierMode = false) {
             const validMatches = [];
-            const maxAttempts = balanceMode ? 150 : 80;
+            const maxAttempts = (balanceMode || useRoleTierMode) ? 250 : 80;
 
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
@@ -2524,11 +2564,33 @@
                     if (stepCount > MAX_STEPS) return;
 
                     if (teamIndex === 2) {
-                        const scoreA = Object.values(teamA).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
-                        const scoreB = Object.values(teamB).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
+                        let scoreA = 0, scoreB = 0;
+
+                        if (useRoleTierMode) {
+                            POSITIONS.forEach(pos => {
+                                const pA = teamA[pos];
+                                const pB = teamB[pos];
+                                const tierStrA = MEMBER_ROLE_TIERS[pA.name]?.[pos] || '-';
+                                const tierStrB = MEMBER_ROLE_TIERS[pB.name]?.[pos] || '-';
+                                scoreA += TIER_SCORE_MAP[tierStrA] || 0;
+                                scoreB += TIER_SCORE_MAP[tierStrB] || 0;
+                            });
+                        } else {
+                            scoreA = Object.values(teamA).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
+                            scoreB = Object.values(teamB).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
+                        }
+
                         const diff = Math.abs(scoreA - scoreB);
 
-                        if (!balanceMode || diff <= 1) {
+                        if (useRoleTierMode) {
+                            if (diff <= 1) {
+                                validMatches.push({
+                                    teamA: JSON.parse(JSON.stringify(teamA)),
+                                    teamB: JSON.parse(JSON.stringify(teamB)),
+                                    scoreA, scoreB, diff
+                                });
+                            }
+                        } else if (!balanceMode || diff <= 1) {
                             validMatches.push({ 
                                 teamA: JSON.parse(JSON.stringify(teamA)), 
                                 teamB: JSON.parse(JSON.stringify(teamB)), 
@@ -2541,7 +2603,14 @@
                     const currentTeam = teamIndex === 0 ? teamA : teamB;
                     const currentPos = POSITIONS[posIndex];
                     const candidates = shuffledPool
-                        .filter(p => !usedPlayerIds.has(p.id) && p.lanes.includes(currentPos))
+                        .filter(p => {
+                            if (usedPlayerIds.has(p.id)) return false;
+                            if (useRoleTierMode) {
+                                const roleTier = MEMBER_ROLE_TIERS[p.name]?.[currentPos];
+                                return roleTier && roleTier !== '-';
+                            }
+                            return p.lanes.includes(currentPos);
+                        })
                         .sort(() => Math.random() - 0.5);
 
                     for (let player of candidates) {
@@ -2559,12 +2628,12 @@
                 }
 
                 solve(0, 0);
-                if (validMatches.length >= 20) break;
+                if (validMatches.length >= 30) break;
             }
 
             if (validMatches.length === 0) return null;
 
-            if (balanceMode) {
+            if (balanceMode || useRoleTierMode) {
                 validMatches.sort((a, b) => a.diff - b.diff);
                 const minDiff = validMatches[0].diff;
                 const bestMatches = validMatches.filter(m => m.diff === minDiff);
@@ -2572,6 +2641,42 @@
             } else {
                 return validMatches[Math.floor(Math.random() * validMatches.length)];
             }
+        }
+
+        /* 🏆 티어 기반 뽑기 전용 함수 */
+        function generateTierBasedTeam() {
+            if (isShuffleCooldown) return;
+
+            const activePool = playerPool.filter(p => p.active !== false);
+
+            if (activePool.length < 10) {
+                alert(`5vs5 내전을 진행하려면 최소 10명의 활성화된 카드가 필요합니다. (현재 참전: ${activePool.length}명)`);
+                return;
+            }
+
+            setShuffleCooldown();
+
+            POSITIONS.forEach(pos => {
+                const blueEl = document.getElementById(`blue-${pos}`);
+                const redEl = document.getElementById(`red-${pos}`);
+                if (blueEl) blueEl.innerHTML = '';
+                if (redEl) redEl.innerHTML = '';
+            });
+
+            const matchResult = assign10Players(activePool, true, true);
+
+            if (!matchResult) {
+                alert('선수들의 라인별 티어(애들 티어 리스트.txt) 조건에 맞는 균형 잡힌 5대5 팀을 조합하지 못했습니다.\n선수들의 포지션 정보나 참여 인원을 확인해 주세요.');
+                return;
+            }
+
+            renderMatchResultOnBoard(
+                matchResult.teamA, 
+                matchResult.teamB, 
+                `🏆 라인별 티어 기반 밸런스 매칭 (점수차: ${matchResult.diff}점)<br>🔵 블루 팀 (점수: ${matchResult.scoreA}) VS 🔴 레드 팀 (점수: ${matchResult.scoreB})`,
+                false,
+                true
+            );
         }
 
         function revealPlayerInStatus(playerName) {
@@ -2653,12 +2758,15 @@
             });
         }
 
-        function createCardElement(teamColor, player, teamName, forceFlipped = false) {
+        function createCardElement(teamColor, player, teamName, forceFlipped = false, pos = '', showRoleTier = false) {
             const card = document.createElement('div');
             card.className = `flip-card ${teamColor}-team ${forceFlipped ? 'flipped' : ''}`;
             card.onclick = () => handleCardClick(card);
 
             const tierInfo = TIER_COLORS[player.tier] || TIER_COLORS['언랭'];
+            const roleTierStr = MEMBER_ROLE_TIERS[player.name]?.[pos] || '-';
+            const roleBadgeHTML = (showRoleTier || roleTierStr !== '-') ? `<div class="role-tier-badge">${pos} 티어: ${roleTierStr}</div>` : '';
+
             card.innerHTML = `
                 <div class="flip-card-inner">
                     <div class="flip-card-front">
@@ -2669,6 +2777,7 @@
                         <img src="${player.avatarUrl}" onerror="this.src='${defaultAvatar}'">
                         <div class="p-name">${player.name}</div>
                         <div class="p-tier">${player.tier}</div>
+                        ${roleBadgeHTML}
                         <div class="p-lanes">${player.lanes.join(', ')}</div>
                         <div class="p-kda" data-player="${escapeHtml(player.name)}">${getCardKdaText(player.name)}</div>
                     </div>
@@ -2682,40 +2791,25 @@
             const btnTeam = document.querySelector('.btn-team');
             const btnBalance = document.querySelector('.btn-balance');
             const btnDraft = document.querySelector('.btn-draft');
+            const btnTierPick = document.querySelector('.btn-tier-pick');
 
-            if (btnTeam) {
-                btnTeam.disabled = true;
-                btnTeam.style.opacity = '0.5';
-                btnTeam.style.cursor = 'not-allowed';
-            }
-            if (btnBalance) {
-                btnBalance.disabled = true;
-                btnBalance.style.opacity = '0.5';
-                btnBalance.style.cursor = 'not-allowed';
-            }
-            if (btnDraft) {
-                btnDraft.disabled = true;
-                btnDraft.style.opacity = '0.5';
-                btnDraft.style.cursor = 'not-allowed';
-            }
+            [btnTeam, btnBalance, btnDraft, btnTierPick].forEach(btn => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                }
+            });
 
             setTimeout(() => {
                 isShuffleCooldown = false;
-                if (btnTeam) {
-                    btnTeam.disabled = false;
-                    btnTeam.style.opacity = '1';
-                    btnTeam.style.cursor = 'pointer';
-                }
-                if (btnBalance) {
-                    btnBalance.disabled = false;
-                    btnBalance.style.opacity = '1';
-                    btnBalance.style.cursor = 'pointer';
-                }
-                if (btnDraft) {
-                    btnDraft.disabled = false;
-                    btnDraft.style.opacity = '1';
-                    btnDraft.style.cursor = 'pointer';
-                }
+                [btnTeam, btnBalance, btnDraft, btnTierPick].forEach(btn => {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.cursor = 'pointer';
+                    }
+                });
             }, 2000);
         }
 
@@ -2751,7 +2845,7 @@
             renderMatchResultOnBoard(matchResult.teamA, matchResult.teamB, balanceMode ? '⚖️ 밸런스 매칭 완료<br>🔵 블루 팀 VS 🔴 레드 팀' : '🔵 블루 팀 VS 🔴 레드 팀');
         }
 
-        function renderMatchResultOnBoard(teamA, teamB, titleText, forceFlipped = false) {
+        function renderMatchResultOnBoard(teamA, teamB, titleText, forceFlipped = false, showRoleTier = false) {
             currentMatchedPlayers = {};
             POSITIONS.forEach(pos => {
                 const blue = teamA[pos];
@@ -2772,13 +2866,13 @@
 
             POSITIONS.forEach(pos => {
                 const bluePlayer = teamA[pos];
-                const cardA = createCardElement('blue', bluePlayer, '블루팀', forceFlipped);
+                const cardA = createCardElement('blue', bluePlayer, '블루팀', forceFlipped, pos, showRoleTier);
                 cardQueue.push({ containerId: `blue-${pos}`, cardEl: cardA });
             });
 
             POSITIONS.forEach(pos => {
                 const redPlayer = teamB[pos];
-                const cardB = createCardElement('red', redPlayer, '레드팀', forceFlipped);
+                const cardB = createCardElement('red', redPlayer, '레드팀', forceFlipped, pos, showRoleTier);
                 cardQueue.push({ containerId: `red-${pos}`, cardEl: cardB });
             });
 
@@ -3114,5 +3208,235 @@
             }
         }
     </script>
+    <!-- ===================================================================
+         [추가 코드] 티어 기반 뽑기 숨김/해금 + 티어 표시 제어 + console.log
+         기존 코드는 수정하지 않고, 이 블록만 새로 추가했습니다.
+         =================================================================== -->
+    <style>
+        /* 티어 기반 뽑기 버튼: 해금 전에는 숨김 */
+        body:not(.tier-pick-unlocked) .btn-tier-pick { display: none !important; }
+
+        /* 5vs5 카드 섞기 / 밸런스 카드 섞기: 카드에 티어 표시 안 함 (티어 기반 뽑기일 때만 표시) */
+        body:not(.tier-pick-mode) .flip-card-back .p-tier,
+        body:not(.tier-pick-mode) .role-tier-badge { display: none !important; }
+
+        /* 라인 대표 드래프트: 티어 표시 안 함 */
+        .captain-tier, .cand-tier, .slot-tier { display: none !important; }
+    </style>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ---------- 1) 숨겨진 해금 시퀀스 ----------
+           🎵 배경음악 4번 → 🔊 효과음 4번 → ✨ 효과 모션 2번(껐다 켜기)
+           순서대로 연속으로 누르면 티어 기반 뽑기 버튼이 나타납니다.
+           중간에 다른 스위치를 누르면 처음부터 다시 시작합니다. */
+        const SEQUENCE = [
+            { id: 'toggleBgm',    label: '🎵 배경음악', need: 4 },
+            { id: 'toggleSound',  label: '🔊 효과음',   need: 4 },
+            { id: 'toggleMotion', label: '✨ 효과 모션', need: 4 }
+        ];
+        let stage = 0;
+        let count = 0;
+        let unlocked = false;
+
+        function resetSequence(reason) {
+            if (stage !== 0 || count !== 0) {
+                console.log('[티어 해금] 시퀀스 초기화 - ' + reason);
+            }
+            stage = 0;
+            count = 0;
+        }
+
+        function unlockTierPick() {
+            unlocked = true;
+            document.body.classList.add('tier-pick-unlocked');
+            console.log('%c[티어 해금] 🏆 티어 기반 뽑기 버튼이 활성화되었습니다!', 'color:#fbbf24;font-weight:bold;font-size:14px;');
+        }
+
+        function onToggle(id, checked) {
+            if (unlocked) return;
+
+            const cur = SEQUENCE[stage];
+            if (id === cur.id) {
+                count++;
+                console.log('[티어 해금] ' + cur.label + ' ' + (checked ? 'ON' : 'OFF') +
+                    ' (' + count + '/' + cur.need + ') - 단계 ' + (stage + 1) + '/' + SEQUENCE.length);
+                if (count >= cur.need) {
+                    console.log('[티어 해금] ✅ 단계 ' + (stage + 1) + ' 완료: ' + cur.label);
+                    stage++;
+                    count = 0;
+                    if (stage >= SEQUENCE.length) unlockTierPick();
+                }
+            } else {
+                resetSequence('순서가 틀렸습니다 (' + id + ')');
+                if (id === SEQUENCE[0].id) {
+                    count = 1;
+                    console.log('[티어 해금] ' + SEQUENCE[0].label + ' ' + (checked ? 'ON' : 'OFF') +
+                        ' (1/' + SEQUENCE[0].need + ') - 단계 1/' + SEQUENCE.length);
+                }
+            }
+        }
+
+        SEQUENCE.forEach(function (s) {
+            const el = document.getElementById(s.id);
+            if (el) el.addEventListener('change', function (e) { onToggle(s.id, e.target.checked); });
+        });
+
+        /* ---------- 2) 결과 렌더링 래핑: 티어 표시 모드 결정 + console.log ----------
+           기존 renderMatchResultOnBoard를 그대로 호출하고, 앞에서 모드만 기록합니다. */
+        const _render = window.renderMatchResultOnBoard;
+        window.renderMatchResultOnBoard = function (teamA, teamB, titleText, forceFlipped, showRoleTier) {
+            const isTierMode = !!showRoleTier;
+            document.body.classList.toggle('tier-pick-mode', isTierMode);
+
+            try {
+                const modeName = isTierMode
+                    ? '🏆 티어 기반 뽑기'
+                    : (String(titleText).indexOf('⚖️') !== -1 ? '⚖️ 밸런스 카드 섞기' : '🃏 5vs5 카드 섞기');
+
+                console.group('[매칭 결과] ' + modeName);
+                const rows = [];
+                let sumA = 0, sumB = 0;
+                POSITIONS.forEach(function (pos) {
+                    const a = teamA[pos], b = teamB[pos];
+                    const row = { 라인: pos, 블루: a ? a.name : '-', 레드: b ? b.name : '-' };
+                    if (isTierMode) {
+                        const ta = (a && MEMBER_ROLE_TIERS[a.name] && MEMBER_ROLE_TIERS[a.name][pos]) || '-';
+                        const tb = (b && MEMBER_ROLE_TIERS[b.name] && MEMBER_ROLE_TIERS[b.name][pos]) || '-';
+                        row['블루 티어'] = ta;
+                        row['레드 티어'] = tb;
+                        sumA += TIER_SCORE_MAP[ta] || 0;
+                        sumB += TIER_SCORE_MAP[tb] || 0;
+                    }
+                    rows.push(row);
+                });
+                console.table(rows);
+                if (isTierMode) {
+                    console.log('블루 점수: ' + sumA + ' / 레드 점수: ' + sumB + ' / 점수차: ' + Math.abs(sumA - sumB));
+                }
+                console.groupEnd();
+            } catch (err) {
+                console.warn('[매칭 결과] 로그 출력 중 오류', err);
+            }
+
+            return _render.apply(this, arguments);
+        };
+
+        /* ---------- 3) 티어 기반 뽑기: 희망 라인을 지키는 매칭으로 교체 ----------
+           기존 assign10Players(티어 모드)는 '라인 티어가 - 가 아니면 배치 가능'으로만 보기 때문에
+           희망 라인이 아닌 곳에 배치되는 경우가 있었습니다. (기존 함수는 그대로 두고 여기서만 대체)
+           규칙: ① 선수의 희망 라인(lanes)에만 배치 ② 라인별 티어 점수 합이 최대한 같도록 밸런스 */
+        /* 희망 라인(p.lanes)을 반드시 지키면서, 라인별 티어 점수로 밸런스를 맞추는 매칭 */
+        function solveTierPickRespectLanes(pool, strictTier) {
+            const roleTier = (p, pos) => (MEMBER_ROLE_TIERS[p.name] && MEMBER_ROLE_TIERS[p.name][pos]) || '-';
+            const score = (p, pos) => TIER_SCORE_MAP[roleTier(p, pos)] || 0;
+            const canPlay = (p, pos) => p.lanes.includes(pos) && (!strictTier || roleTier(p, pos) !== '-');
+
+            const candCount = {};
+            POSITIONS.forEach(pos => { candCount[pos] = pool.filter(p => canPlay(p, pos)).length; });
+            if (POSITIONS.some(pos => candCount[pos] < 2)) return null;
+
+            const order = [...POSITIONS].sort((a, b) => candCount[a] - candCount[b]);
+            const slots = [];
+            order.forEach(pos => { slots.push({ pos, team: 'A' }); slots.push({ pos, team: 'B' }); });
+
+            let best = [];
+            let bestDiff = Infinity;
+
+            for (let attempt = 0; attempt < 400; attempt++) {
+                const shuffled = [...pool].sort(() => Math.random() - 0.5);
+                const used = new Set();
+                const teamA = {}, teamB = {};
+                let steps = 0;
+
+                (function solve(i) {
+                    if (++steps > 3000) return;
+                    if (i === slots.length) {
+                        let sA = 0, sB = 0;
+                        POSITIONS.forEach(pos => { sA += score(teamA[pos], pos); sB += score(teamB[pos], pos); });
+                        const diff = Math.abs(sA - sB);
+                        if (diff < bestDiff) { bestDiff = diff; best = []; }
+                        if (diff === bestDiff && best.length < 50) {
+                            best.push({ teamA: { ...teamA }, teamB: { ...teamB }, scoreA: sA, scoreB: sB, diff });
+                        }
+                        return;
+                    }
+                    const { pos, team } = slots[i];
+                    const target = team === 'A' ? teamA : teamB;
+                    for (const p of shuffled) {
+                        if (used.has(p.id) || !canPlay(p, pos)) continue;
+                        used.add(p.id); target[pos] = p;
+                        solve(i + 1);
+                        used.delete(p.id); delete target[pos];
+                        if (steps > 3000) return;
+                    }
+                })(0);
+
+                if (bestDiff === 0 && best.length >= 20) break;
+                if (bestDiff <= 1 && best.length >= 30) break;
+            }
+
+            if (!best.length) return null;
+            return best[Math.floor(Math.random() * best.length)];
+        }
+
+
+        window.generateTierBasedTeam = function () {
+            if (isShuffleCooldown) {
+                console.log('[티어 기반 뽑기] 쿨다운 중이라 무시됨');
+                return;
+            }
+
+            const activePool = playerPool.filter(function (p) { return p.active !== false; });
+            if (activePool.length < 10) {
+                alert('5vs5 내전을 진행하려면 최소 10명의 활성화된 카드가 필요합니다. (현재 참전: ' + activePool.length + '명)');
+                return;
+            }
+
+            console.log('[티어 기반 뽑기] 🏆 희망 라인 + 라인별 티어 밸런스 매칭 시작 (참전 ' + activePool.length + '명)');
+            setShuffleCooldown();
+
+            POSITIONS.forEach(function (pos) {
+                const blueEl = document.getElementById('blue-' + pos);
+                const redEl = document.getElementById('red-' + pos);
+                if (blueEl) blueEl.innerHTML = '';
+                if (redEl) redEl.innerHTML = '';
+            });
+
+            /* 1순위: 희망 라인 + 해당 라인 티어가 있는 선수만 / 2순위: 희망 라인만 */
+            let result = solveTierPickRespectLanes(activePool, true);
+            if (!result) {
+                result = solveTierPickRespectLanes(activePool, false);
+                if (result) console.warn('[티어 기반 뽑기] 라인 티어가 없는(-) 라인도 희망 라인이라 포함해서 매칭했습니다.');
+            }
+
+            if (!result) {
+                console.warn('[티어 기반 뽑기] 매칭 실패 - 희망 라인 조건을 만족하는 5대5 조합이 없습니다.');
+                alert('선수들의 희망 라인 조건에 맞는 5대5 팀을 만들 수 없습니다.\n참전 인원이나 선수들의 희망 라인을 확인해 주세요.');
+                return;
+            }
+
+            renderMatchResultOnBoard(
+                result.teamA,
+                result.teamB,
+                '🏆 라인별 티어 기반 밸런스 매칭 (점수차: ' + result.diff + '점)<br>🔵 블루 팀 (점수: ' + result.scoreA + ') VS 🔴 레드 팀 (점수: ' + result.scoreB + ')',
+                false,
+                true
+            );
+        };
+
+        /* ---------- 4) 라인 대표 드래프트 시작 로그 ---------- */
+        const _draft = window.startDraftMode;
+        window.startDraftMode = function () {
+            console.log('[라인 대표 드래프트] 시작');
+            return _draft.apply(this, arguments);
+        };
+
+        console.log('[티어 해금] 준비 완료 - 배경음악 4번 → 효과음 4번 → 효과 모션 2번(껐다 켜기)');
+    })();
+    </script>
+
 </body>
 </html>
