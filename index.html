@@ -1270,7 +1270,10 @@
     <div class="modal" id="playerStatsModal" style="z-index: 1004;">
         <div class="modal-content" style="max-width: 500px;">
             <span class="modal-close" onclick="closeModal('playerStatsModal')">&times;</span>
-            <h2 id="statsPlayerTitle" style="margin-bottom: 15px; color: #60a5fa;">📊 선수 전적 정보</h2>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-right: 32px; margin-bottom: 15px;">
+                <h2 id="statsPlayerTitle" style="margin: 0; color: #60a5fa;">📊 선수 전적 정보</h2>
+                <span id="statsPlayerScoreBox" style="display: flex; flex-direction: column; align-items: center; line-height: 1.1; padding: 6px 14px; border-radius: 12px; background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.6); box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);"><span style="font-size: 0.7em; color: #fcd34d; font-weight: bold;">점수</span><span id="statsPlayerScore" style="font-size: 1.6em; color: #fbbf24; font-weight: 800;"></span></span>
+            </div>
             
             <div class="stats-summary-box">
                 <div class="stat-box-item">
@@ -2440,6 +2443,14 @@
             const laneKeys = hasUnassigned ? [...POSITIONS, '미지정'] : [...POSITIONS];
 
             document.getElementById('statsPlayerTitle').innerText = `📊 ${playerName} 선수 전적 정보`;
+
+            /* 제목 오른쪽 작은 회색 점수 (현재 티어 + 최고 티어) */
+            const scoreEl = document.getElementById('statsPlayerScore');
+            const scorePlayer = playerPool.find(x => x.name === playerName);
+            if (scoreEl) {
+                scoreEl.innerText = scorePlayer ? getPlayerScore(scorePlayer) : '';
+                (document.getElementById('statsPlayerScoreBox') || scoreEl).title = scorePlayer ? `점수 = 현재 티어 ${TIER_COLORS[scorePlayer.tier]?.score || 0} + 최고 티어 ${TIER_COLORS[getPeakTier(scorePlayer)]?.score || 0}` : '';
+            }
 
             /* 라인별 전적 표 */
             document.getElementById('laneStatsBody').innerHTML = laneKeys.map(key => {
