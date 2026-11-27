@@ -1064,6 +1064,13 @@
             .rec-row select { grid-column: 2 / 5; }
             .rec-row input[type="text"] { grid-column: 1 / 5; }
         }
+
+        /* 현재 티어 / 최고 티어 표시 */
+        .tier-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .flip-card-back .p-peak { font-size: 0.68em; font-weight: bold; margin-bottom: 1px; }
+        .zoom-card-container .p-peak { font-size: 0.9em; margin-bottom: 4px; }
+        .card-score { font-size: 0.72em; color: #cbd5e1; font-weight: bold; }
+        .btn-pick-candidate .cand-peak, .draft-player-slot .slot-peak { font-size: 0.7em; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -1225,20 +1232,16 @@
                 <input type="text" id="name" placeholder="예: 장유성">
             </div>
             <div class="form-group">
-                <label for="tier">티어 선택:</label>
-                <select id="tier">
-                    <option value="언랭" selected>언랭</option>
-                    <option value="아이언">아이언</option>
-                    <option value="브론즈">브론즈</option>
-                    <option value="실버">실버</option>
-                    <option value="골드">골드</option>
-                    <option value="플래티넘">플래티넘</option>
-                    <option value="에메랄드">에메랄드</option>
-                    <option value="다이아">다이아</option>
-                    <option value="마스터">마스터</option>
-                    <option value="그랜드마스터">그랜드마스터</option>
-                    <option value="챌린저">챌린저</option>
-                </select>
+                <div class="tier-select-row">
+                    <div>
+                        <label for="tier">현재 티어:</label>
+                        <select id="tier"></select>
+                    </div>
+                    <div>
+                        <label for="peakTier">최고 티어:</label>
+                        <select id="peakTier"></select>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>가능한 라인 선택:</label>
@@ -1306,8 +1309,20 @@
     <div class="modal" id="editLaneModal" style="z-index: 1002;">
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close" onclick="closeModal('editLaneModal')">&times;</span>
-            <h2 style="margin-bottom: 10px;">✏️ 선호 라인 수정</h2>
+            <h2 style="margin-bottom: 10px;">✏️ 카드 수정 (티어 / 라인)</h2>
             <p id="editPlayerName" style="color: #60a5fa; font-weight: bold; margin-bottom: 20px;"></p>
+            <div class="form-group">
+                <div class="tier-select-row">
+                    <div>
+                        <label for="editTier">현재 티어:</label>
+                        <select id="editTier"></select>
+                    </div>
+                    <div>
+                        <label for="editPeakTier">최고 티어:</label>
+                        <select id="editPeakTier"></select>
+                    </div>
+                </div>
+            </div>
             <div class="form-group">
                 <label>가능한 라인 선택:</label>
                 <div class="lane-buttons" id="editLaneButtons">
@@ -1688,27 +1703,65 @@
             '챌린저': { color: '#38bdf8', glow: 'rgba(56, 189, 248, 0.95)', score: 9 }
         };
 
+        /* 티어 목록 / 점수 헬퍼: 점수 = 현재 티어 + 최고 티어 */
+        const TIER_LIST = Object.keys(TIER_COLORS);
+
+        function getPeakTier(p) { return (p && (p.peakTier || p.tier)) || '언랭'; }
+
+        function getPlayerScore(p) {
+            if (!p) return 0;
+            const cur = TIER_COLORS[p.tier]?.score || 0;
+            const peak = TIER_COLORS[getPeakTier(p)]?.score || 0;
+            return cur + peak;
+        }
+
+        function isPeakValid(curTier, peakTier) {
+            return TIER_LIST.indexOf(peakTier) >= TIER_LIST.indexOf(curTier);
+        }
+
+        function tierLabel(p) {
+            if (!p) return '언랭';
+            return getPeakTier(p);
+        }
+
+        function populateTierSelects() {
+            const opts = TIER_LIST.map(t => `<option value="${t}">${t}</option>`).join('');
+            ['tier', 'peakTier', 'editTier', 'editPeakTier'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = opts;
+            });
+            /* 현재 티어를 최고 티어보다 높게 고르면 최고 티어를 자동으로 맞춰 줌 */
+            [['tier', 'peakTier'], ['editTier', 'editPeakTier']].forEach(([curId, peakId]) => {
+                const cur = document.getElementById(curId);
+                const peak = document.getElementById(peakId);
+                if (!cur || !peak) return;
+                cur.addEventListener('change', () => {
+                    if (!isPeakValid(cur.value, peak.value)) peak.value = cur.value;
+                });
+            });
+        }
+
         const playerPool = [
-            { id: 1, name: '장유성', tier: '플래티넘', lanes: ['정글','서폿'], avatarUrl: getAvatarForName('장유성'), active: true },
-            { id: 2, name: '정세훈', tier: '플래티넘', lanes: ['미드','원딜'], avatarUrl: getAvatarForName('정세훈'), active: true },
-            { id: 3, name: '김민규', tier: '마스터', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김민규'), active: true },
-            { id: 4, name: '김태후', tier: '플래티넘', lanes: ['탑','미드'], avatarUrl: getAvatarForName('김태후'), active: true },
-            { id: 5, name: '김채훈', tier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈'), active: true },
-            { id: 6, name: '김태윤', tier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤'), active: true },
-            { id: 7, name: '손재민', tier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민'), active: true },
-            { id: 8, name: '유준서', tier: '골드', lanes: ['탑','정글','미드', '원딜', '서폿'], avatarUrl: getAvatarForName('유준서'), active: true },
-            { id: 9, name: '김주환', tier: '플래티넘', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김주환'), active: true },
-            { id: 10, name: '한승기', tier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('한승기'), active: true },
-            { id: 11, name: '권도윤', tier: '실버', lanes: ['탑','서폿'], avatarUrl: getAvatarForName('권도윤'), active: true },
-            { id: 12, name: '오치형', tier: '에메랄드', lanes: ['정글','미드'], avatarUrl: getAvatarForName('오치형'), active: true },
-            { id: 13, name: '임서진', tier: '에메랄드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('임서진'), active: true },
-            { id: 14, name: '곽현수', tier: '플래티넘', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('곽현수'), active: true },
-            { id: 15, name: '강희성', tier: '골드', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('강희성'), active: true },
-            { id: 16, name: '이선재', tier: '플래티넘', lanes: ['탑'], avatarUrl: getAvatarForName('이선재'), active: true },
-            { id: 17, name: '최원혁', tier: '플래티넘', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁'), active: true },
-            { id: 18, name: '박재현', tier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현'), active: true },
-            { id: 19, name: '김혜준', tier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준'), active: true },
-            { id: 20, name: '이민준', tier: '실버', lanes: ['탑', '원딜'], avatarUrl: getAvatarForName('이민준'), active: true }
+            { id: 1, name: '장유성', tier: '골드', peakTier: '플래티넘', lanes: ['정글','서폿'], avatarUrl: getAvatarForName('장유성'), active: true },
+            { id: 2, name: '정세훈', tier: '플래티넘', peakTier: '플래티넘', lanes: ['미드','원딜'], avatarUrl: getAvatarForName('정세훈'), active: true },
+            { id: 3, name: '김민규', tier: '다이아', peakTier: '마스터', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김민규'), active: true },
+            { id: 4, name: '김태후', tier: '플래티넘', peakTier: '플래티넘', lanes: ['탑','미드'], avatarUrl: getAvatarForName('김태후'), active: true },
+            { id: 5, name: '김채훈', tier: '플래티넘', peakTier: '플래티넘', lanes: ['탑','정글','미드'], avatarUrl: getAvatarForName('김채훈'), active: true },
+            { id: 6, name: '김태윤', tier: '브론즈', peakTier: '브론즈', lanes: ['원딜','서폿'], avatarUrl: getAvatarForName('김태윤'), active: true },
+            { id: 7, name: '손재민', tier: '골드', peakTier: '골드', lanes: ['미드','서폿'], avatarUrl: getAvatarForName('손재민'), active: true },
+            { id: 8, name: '유준서', tier: '실버', peakTier: '골드', lanes: ['탑','정글','미드', '원딜', '서폿'], avatarUrl: getAvatarForName('유준서'), active: true },
+            { id: 9, name: '김주환', tier: '플래티넘', peakTier: '플래티넘', lanes: ['탑','미드','원딜','서폿'], avatarUrl: getAvatarForName('김주환'), active: true },
+            { id: 10, name: '한승기', tier: '골드', peakTier: '플래티넘', lanes: ['탑','정글','서폿'], avatarUrl: getAvatarForName('한승기'), active: true },
+            { id: 11, name: '권도윤', tier: '실버', peakTier: '실버', lanes: ['탑','서폿'], avatarUrl: getAvatarForName('권도윤'), active: true },
+            { id: 12, name: '오치형', tier: '플래티넘', peakTier: '에메랄드', lanes: ['정글','미드'], avatarUrl: getAvatarForName('오치형'), active: true },
+            { id: 13, name: '임서진', tier: '에메랄드', peakTier: '에메랄드', lanes: ['탑','정글','원딜'], avatarUrl: getAvatarForName('임서진'), active: true },
+            { id: 14, name: '곽현수', tier: '골드', peakTier: '플래티넘', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('곽현수'), active: true },
+            { id: 15, name: '강희성', tier: '브론즈', peakTier: '골드', lanes: ['탑','미드','원딜'], avatarUrl: getAvatarForName('강희성'), active: true },
+            { id: 16, name: '이선재', tier: '플래티넘', peakTier: '플래티넘', lanes: ['탑'], avatarUrl: getAvatarForName('이선재'), active: true },
+            { id: 17, name: '최원혁', tier: '플래티넘', peakTier: '플래티넘', lanes: ['탑', '미드', '서폿'], avatarUrl: getAvatarForName('최원혁'), active: true },
+            { id: 18, name: '박재현', tier: '골드', peakTier: '플래티넘', lanes: ['탑', '정글', '미드', '원딜', '서폿'], avatarUrl: getAvatarForName('박재현'), active: true },
+            { id: 19, name: '김혜준', tier: '실버', peakTier: '실버', lanes: ['정글', '서폿'], avatarUrl: getAvatarForName('김혜준'), active: true },
+            { id: 20, name: '이민준', tier: '실버', peakTier: '실버', lanes: ['탑', '원딜'], avatarUrl: getAvatarForName('이민준'), active: true }
         ];
 
         /* ====================================================
@@ -2102,6 +2155,7 @@
         let isShuffleCooldown = false;
 
         window.onload = () => { 
+            populateTierSelects();
             loadMatchRecords();
             renderCards(); 
             renderStatusPanel();
@@ -2201,6 +2255,7 @@
         function resetAddForm() {
             document.getElementById('name').value = '';
             document.getElementById('tier').value = '언랭';
+            document.getElementById('peakTier').value = '언랭';
             document.getElementById('profileImg').value = '';
             document.getElementById('previewImage').style.display = 'none';
             document.getElementById('previewImage').src = '';
@@ -2213,8 +2268,10 @@
         function addCard() {
             const name = document.getElementById('name').value.trim();
             const tier = document.getElementById('tier').value;
+            const peakTier = document.getElementById('peakTier').value;
 
             if (!name) return alert('닉네임을 입력해 주세요.');
+            if (!isPeakValid(tier, peakTier)) return alert('최고 티어는 현재 티어보다 낮을 수 없습니다.');
             if (selectedLanes.size === 0) return alert('라인을 최소 하나 이상 선택해 주세요.');
 
             const finalAvatar = getAvatarForName(name, pastedAvatarData);
@@ -2223,6 +2280,7 @@
                 id: Date.now() + Math.random(),
                 name: name,
                 tier: tier,
+                peakTier: peakTier,
                 lanes: Array.from(selectedLanes),
                 avatarUrl: finalAvatar,
                 active: true
@@ -2249,7 +2307,9 @@
             editingPlayerId = id;
             editingSelectedLanes = new Set(player.lanes);
 
-            document.getElementById('editPlayerName').innerText = `${player.name} (${player.tier})`;
+            document.getElementById('editPlayerName').innerText = player.name;
+            document.getElementById('editTier').value = player.tier;
+            document.getElementById('editPeakTier').value = getPeakTier(player);
             
             const buttons = document.querySelectorAll('#editLaneButtons .lane-btn');
             buttons.forEach(btn => {
@@ -2280,8 +2340,16 @@
                 return alert('라인을 최소 하나 이상 선택해 주세요.');
             }
 
+            const newTier = document.getElementById('editTier').value;
+            const newPeakTier = document.getElementById('editPeakTier').value;
+            if (!isPeakValid(newTier, newPeakTier)) {
+                return alert('최고 티어는 현재 티어보다 낮을 수 없습니다.');
+            }
+
             const player = playerPool.find(p => p.id === editingPlayerId);
             if (player) {
+                player.tier = newTier;
+                player.peakTier = newPeakTier;
                 player.lanes = Array.from(editingSelectedLanes);
                 renderCards();
                 renderStatusPanel();
@@ -2446,26 +2514,27 @@
                 const activeB = b.active !== false ? 1 : 0;
                 if (activeA !== activeB) return activeB - activeA;
 
-                const scoreA = TIER_COLORS[a.tier]?.score || 0;
-                const scoreB = TIER_COLORS[b.tier]?.score || 0;
+                const scoreA = getPlayerScore(a);
+                const scoreB = getPlayerScore(b);
                 if (scoreB !== scoreA) return scoreB - scoreA;
                 return a.name.localeCompare(b.name, 'ko');
             });
 
             modalListEl.innerHTML = sortedPlayerPool.map(p => {
                 const tierInfo = TIER_COLORS[p.tier] || TIER_COLORS['언랭'];
+                const peakInfo = TIER_COLORS[getPeakTier(p)] || TIER_COLORS['언랭'];
                 const isDisabled = p.active === false;
                 const stats = getPlayerStatsSummary(p.name);
 
                 return `
                     <div class="card-simple ${isDisabled ? 'disabled' : ''}">
                         <button class="card-delete" onclick="deleteCard(${p.id})" title="삭제">✕</button>
-                        <button class="card-edit" onclick="openEditLaneModal(${p.id})" title="라인 수정">✏️</button>
+                        <button class="card-edit" onclick="openEditLaneModal(${p.id})" title="티어 / 라인 수정">✏️</button>
                         <button class="card-stats-btn" onclick="openPlayerStatsModal('${p.name}')" title="전적 보기">📊</button>
                         <button class="card-record-add" onclick="openAuthModal('recordModal', '${p.name}')" title="전적 추가 (10명 한 번에)">+</button>
                         <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}" onclick="togglePlayerActive(${p.id})" title="클릭하여 참전/비참전 토글">
                         <strong style="color:#fff;">${p.name}</strong>
-                        <span class="p-tier-badge" style="color:${tierInfo.color};">${p.tier}</span>
+                        <span class="p-tier-badge" style="color:${peakInfo.color};">${getPeakTier(p)}</span>
                         <span style="font-size:0.72em; color:#94a3b8;">${p.lanes.join(', ')}</span>
                         <div class="card-stats-summary">
                             <span class="stat-winrate-tag">승률: ${stats.winRate}% (${stats.wins}승 ${stats.losses}패)</span>
@@ -2556,8 +2625,8 @@
                                 scoreB += TIER_SCORE_MAP[tierStrB] || 0;
                             });
                         } else {
-                            scoreA = Object.values(teamA).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
-                            scoreB = Object.values(teamB).reduce((sum, p) => sum + (TIER_COLORS[p.tier]?.score || 0), 0);
+                            scoreA = Object.values(teamA).reduce((sum, p) => sum + getPlayerScore(p), 0);
+                            scoreB = Object.values(teamB).reduce((sum, p) => sum + getPlayerScore(p), 0);
                         }
 
                         const diff = Math.abs(scoreA - scoreB);
@@ -2570,7 +2639,7 @@
                                     scoreA, scoreB, diff
                                 });
                             }
-                        } else if (!balanceMode || diff <= 1) {
+                        } else if (!balanceMode || diff <= 2) { /* 점수가 (현재+최고)로 2배가 되어 허용 오차도 2배 */
                             validMatches.push({ 
                                 teamA: JSON.parse(JSON.stringify(teamA)), 
                                 teamB: JSON.parse(JSON.stringify(teamB)), 
@@ -2744,6 +2813,7 @@
             card.onclick = () => handleCardClick(card);
 
             const tierInfo = TIER_COLORS[player.tier] || TIER_COLORS['언랭'];
+            const peakInfo = TIER_COLORS[getPeakTier(player)] || TIER_COLORS['언랭'];
             const roleTierStr = MEMBER_ROLE_TIERS[player.name]?.[pos] || '-';
             const roleBadgeHTML = (showRoleTier || roleTierStr !== '-') ? `<div class="role-tier-badge">${pos} 티어: ${roleTierStr}</div>` : '';
 
@@ -2756,7 +2826,7 @@
                     <div class="flip-card-back" style="--tier-color: ${tierInfo.color}; --tier-glow-color: ${tierInfo.glow};">
                         <img src="${player.avatarUrl}" onerror="this.src='${defaultAvatar}'">
                         <div class="p-name">${player.name}</div>
-                        <div class="p-tier">${player.tier}</div>
+                        <div class="p-tier" data-score="${getPlayerScore(player)}" style="color: ${peakInfo.color};">${getPeakTier(player)}</div>
                         ${roleBadgeHTML}
                         <div class="p-lanes">${player.lanes.join(', ')}</div>
                         <div class="p-kda" data-player="${escapeHtml(player.name)}">${getCardKdaText(player.name)}</div>
@@ -2938,19 +3008,17 @@
                 const redCard = redContainer.querySelector('.flip-card');
                 
                 if (blueCard && redCard && blueCard.classList.contains('flipped') && redCard.classList.contains('flipped')) {
-                    const blueTierTxt = blueCard.querySelector('.p-tier').innerText;
-                    const redTierTxt = redCard.querySelector('.p-tier').innerText;
-                    
-                    const blueScore = TIER_COLORS[blueTierTxt] ? TIER_COLORS[blueTierTxt].score : 0;
-                    const redScore = TIER_COLORS[redTierTxt] ? TIER_COLORS[redTierTxt].score : 0;
+                    /* 점수 = 현재 티어 + 최고 티어 (카드에 data-score로 저장됨) */
+                    const blueScore = Number(blueCard.querySelector('.p-tier').dataset.score) || 0;
+                    const redScore = Number(redCard.querySelector('.p-tier').dataset.score) || 0;
                     
                     const diff = Math.abs(blueScore - redScore);
                     
-                    if (diff >= 3) {
+                    if (diff >= 6) { /* 기존 3티어 차이 = 합산 기준 6점 차이 */
                         titleEl.innerHTML = `${pos}`;
                         titleEl.classList.add('lane-warning');
                         
-                        let redIntensity = Math.min(0.4 + (diff - 3) * 0.2, 0.9); 
+                        let redIntensity = Math.min(0.4 + (diff - 6) * 0.1, 0.9); 
                         
                         titleEl.style.backgroundColor = `rgba(239, 68, 68, ${redIntensity})`;
                         titleEl.style.borderColor = '#ef4444';
@@ -3047,8 +3115,8 @@
             document.getElementById('blueCaptainName').innerText = blueRepName;
             
             const blueTierEl = document.getElementById('blueCaptainTier');
-            blueTierEl.innerText = blueRepPlayer?.tier || '언랭';
-            blueTierEl.style.color = blueTierInfo.color;
+            blueTierEl.innerText = tierLabel(blueRepPlayer);
+            blueTierEl.style.color = (TIER_COLORS[getPeakTier(blueRepPlayer)] || TIER_COLORS['언랭']).color;
 
             const blueImgEl = document.getElementById('blueCaptainImg');
             blueImgEl.src = blueRepPlayer?.avatarUrl || defaultAvatar;
@@ -3057,8 +3125,8 @@
             document.getElementById('redCaptainName').innerText = redRepName;
 
             const redTierEl = document.getElementById('redCaptainTier');
-            redTierEl.innerText = redRepPlayer?.tier || '언랭';
-            redTierEl.style.color = redTierInfo.color;
+            redTierEl.innerText = tierLabel(redRepPlayer);
+            redTierEl.style.color = (TIER_COLORS[getPeakTier(redRepPlayer)] || TIER_COLORS['언랭']).color;
 
             const redImgEl = document.getElementById('redCaptainImg');
             redImgEl.src = redRepPlayer?.avatarUrl || defaultAvatar;
@@ -3101,14 +3169,14 @@
                                 <img src="${candA.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfoA.color}">
                                 <div class="cand-info">
                                     <span class="cand-name">${candA.name}</span>
-                                    <span class="cand-tier" style="color:${tierInfoA.color};">${candA.tier}</span>
+                                    <span class="cand-tier" style="color:${(TIER_COLORS[getPeakTier(candA)] || TIER_COLORS['언랭']).color};">${getPeakTier(candA)}</span>
                                 </div>
                             </button>
                             <button class="btn-pick-candidate" onclick="pickDraftPlayer('${lane}', 'B')">
                                 <img src="${candB.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfoB.color}">
                                 <div class="cand-info">
                                     <span class="cand-name">${candB.name}</span>
-                                    <span class="cand-tier" style="color:${tierInfoB.color};">${candB.tier}</span>
+                                    <span class="cand-tier" style="color:${(TIER_COLORS[getPeakTier(candB)] || TIER_COLORS['언랭']).color};">${getPeakTier(candB)}</span>
                                 </div>
                             </button>
                         </div>
@@ -3141,7 +3209,7 @@
                         <img src="${p.avatarUrl}" onerror="this.src='${defaultAvatar}'" style="border-color:${tierInfo.color}">
                         <div class="slot-info">
                             <span class="slot-name">${p.name}</span>
-                            <span class="slot-tier" style="color:${tierInfo.color};">${p.tier}</span>
+                            <span class="slot-tier" style="color:${(TIER_COLORS[getPeakTier(p)] || TIER_COLORS['언랭']).color};">${getPeakTier(p)}</span>
                         </div>
                     </div>
                 `;
